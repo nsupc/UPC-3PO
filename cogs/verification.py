@@ -2,20 +2,11 @@ from bs4 import BeautifulSoup as bs
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import mysql.connector
-import os
 import time
 
-from functions import api_call
+from functions import api_call,connector
 
 load_dotenv()
-
-mydb = mysql.connector.connect(
-    host=os.getenv("host"),
-    user=os.getenv("user"),
-    password=os.getenv("password"),
-    database=os.getenv("database")
-)
 
 class verification(commands.Cog):
 
@@ -24,6 +15,7 @@ class verification(commands.Cog):
 
     @commands.command()
     async def verify(self, ctx, *, nation):
+        mydb = connector()
         nat = nation.lower().replace(" ", "_")
         try:
             if(bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=name').text, 'xml').NAME.text):
@@ -64,6 +56,7 @@ class verification(commands.Cog):
 
     @commands.command()
     async def id(self, ctx, member : commands.MemberConverter):
+        mydb = connector()
         mycursor = mydb.cursor()
         mycursor.execute(f"SELECT * FROM reg WHERE userid = '{member.id}' AND serverid = '{ctx.guild.id}' AND verified = 1")
         myresult = mycursor.fetchall()

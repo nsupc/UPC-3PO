@@ -7,19 +7,11 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import math
 import matplotlib.pyplot as plt
-import mysql.connector
 import os
 
-from functions import api_call,updated
+from functions import api_call,updated,connector
 
 load_dotenv()
-
-mydb = mysql.connector.connect(
-    host=os.getenv("host"),
-    user=os.getenv("user"),
-    password=os.getenv("password"),
-    database=os.getenv("database")
-)
 
 class nsinfo(commands.Cog):
 
@@ -58,6 +50,7 @@ class nsinfo(commands.Cog):
 
     @commands.command()
     async def endotart(self, ctx, *, nation):
+        mydb = connector()
         nat = nation.lower().replace(" ","_")
         natarr = []
         path = nat + "_endotart.html"
@@ -93,6 +86,7 @@ class nsinfo(commands.Cog):
     
     @commands.command()
     async def nne(self, ctx, *, nation):
+        mydb = connector()
         nat = nation.lower().replace(" ","_")
         path = nat + "_nne.html"
         was = []
@@ -210,6 +204,7 @@ class nsinfo(commands.Cog):
     
     @commands.command()
     async def activity(self, ctx, *, region):
+        mydb = connector()
         mycursor = mydb.cursor()
 
         mycursor.execute(f"SELECT lastlogin FROM nations WHERE region = '{region}'")

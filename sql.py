@@ -4,17 +4,13 @@ import mysql.connector
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+from functions import connector
 
-mydb = mysql.connector.connect(
-  host=os.getenv("host"),
-  user=os.getenv("user"),
-  password=os.getenv("password"),
-  database=os.getenv("database")
-)
-mycursor = mydb.cursor()
 
 def sqlnat():
+    mydb = connector()
+    mycursor = mydb.cursor()
+
     mycursor.execute("DROP TABLE nations")
 
     mycursor.execute("CREATE TABLE nations (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), type VARCHAR(255), motto VARCHAR(255), category VARCHAR(255), unstatus VARCHAR(255), numendos SMALLINT(10), issues SMALLINT(10), region VARCHAR(255), population INT(10), founded INT(25), lastlogin INT(25), influence VARCHAR(255), dbid INT(25), endorsements LONGTEXT)")
@@ -36,6 +32,9 @@ def sqlnat():
     print(mycursor.rowcount, "record(s) inserted.")
 
 def sqlreg():
+    mydb = connector()
+    mycursor = mydb.cursor()
+
     mycursor.execute("DROP TABLE reg")
     
     mycursor.execute("CREATE TABLE reg (id INT AUTO_INCREMENT PRIMARY KEY, userid VARCHAR(30), serverid VARCHAR(30), nation VARCHAR(40), timestamp INT(25), verified BOOL)")
@@ -43,6 +42,9 @@ def sqlreg():
     mydb.commit()
 
 def sqlguild():
+    mydb = connector()
+    mycursor = mydb.cursor()
+    
     mycursor.execute("DROP TABLE guild")
     
     mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500))")
