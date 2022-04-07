@@ -1,0 +1,8 @@
+#environment variables
+.env
+.xml
+nations.xml
+extra.py
+limit.py
+*.pyc
+cogs/example.py
