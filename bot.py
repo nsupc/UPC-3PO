@@ -1,20 +1,13 @@
 import discord
 from discord.ext import commands
-import json
 import os
 from dotenv import load_dotenv
+
+from functions import get_prefix
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 ID = int(os.getenv("ID"))
-
-def get_prefix(bot, msg):
-    if msg.guild is None:
-        return '!'
-    else:
-        with open('prefixes.json', 'r') as f:
-            prefixes = json.load(f)
-        return prefixes[str(msg.guild.id)]
 
 bot = commands.Bot(command_prefix = get_prefix)
 bot.remove_command("help")
