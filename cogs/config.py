@@ -47,13 +47,12 @@ class config(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def changeprefix(self, ctx, *, prefix):
-        with open('prefixes.json', 'r') as f:
-            prefixes = json.load(f)
+        mycursor = mydb.cursor()
 
-        prefixes[str(ctx.guild.id)] = prefix
+        mycursor.execute(f'UPDATE guild SET prefix = "{prefix}" WHERE serverid = "{ctx.guild.id}"')
+        
+        mydb.commit()
 
-        with open('prefixes.json', 'w') as f:
-            json.dump(prefixes, f, indent=4)
         await ctx.send(f"Prefix changed to '{prefix}'")
 
     @changeprefix.error
