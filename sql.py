@@ -43,9 +43,13 @@ def sqlreg():
     mydb.commit()
 
 def sqlguild():
-    #mycursor.execute("DROP TABLE guild")
+    mycursor.execute("DROP TABLE guild")
     
-    mycursor.execute("CREATE TABLE reg (id INT AUTO_INCREMENT PRIMARY KEY)")
+    mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500))")
+
+    #sql = ("INSERT INTO guild (serverid, prefix) VALUES (%s, %s)")
+    #val = ("", "!")
+    #mycursor.execute(sql, val)
 
     mydb.commit()
 
