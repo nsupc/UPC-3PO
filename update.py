@@ -8,7 +8,7 @@ import gzip
 from datetime import datetime as dt
 import time
 
-from calls import api_call
+from functions import api_call
 
 load_dotenv()
 

@@ -6,7 +6,7 @@ import mysql.connector
 import os
 import time
 
-from calls import api_call
+from functions import api_call
 
 load_dotenv()
 

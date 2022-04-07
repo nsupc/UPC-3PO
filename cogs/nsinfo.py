@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import mysql.connector
 import os
 
-from calls import api_call,updated
+from functions import api_call,updated
 
 load_dotenv()
 
