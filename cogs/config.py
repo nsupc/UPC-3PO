@@ -1,6 +1,19 @@
 import discord
 from discord.ext import commands
 import json
+import os
+from dotenv import load_dotenv
+import mysql.connector
+
+load_dotenv()
+
+mydb = mysql.connector.connect(
+    host=os.getenv("host"),
+    user=os.getenv("user"),
+    password=os.getenv("password"),
+    database=os.getenv("database")
+)
+
 
 class config(commands.Cog):
 
@@ -10,23 +23,21 @@ class config(commands.Cog):
     #Events
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        with open('prefixes.json', 'r') as f:
-            prefixes = json.load(f)
+        mycursor = mydb.cursor()
+        
+        sql = ("INSERT INTO guild (serverid, prefix) VALUES (%s, %s)")
+        val = (f"{guild.id}", "!")
+        mycursor.execute(sql, val)
 
-        prefixes[str(guild.id)] = '!'
-
-        with open('prefixes.json', 'w') as f:
-            json.dump(prefixes, f, indent=4)
+        mydb.commit()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        with open('prefixes.json', 'r') as f:
-            prefixes = json.load(f)
+        mycursor = mydb.cursor()
 
-        del prefixes[str(guild.id)]
+        mycursor.execute(f'DELETE FROM ns.guild WHERE serverid = "{guild.id}"')
 
-        with open('prefixes.json', 'w') as f:
-            json.dump(prefixes, f, indent=4)
+        mydb.commit()
 
     #Commands
     @commands.command()
@@ -90,8 +101,6 @@ class config(commands.Cog):
 
         else:
             await ctx.send("Please specify which command set you wish the help module for. The options are nsinfo, verification, admin, or config.")
-
-
 
 def setup(bot):
     bot.add_cog(config(bot))
