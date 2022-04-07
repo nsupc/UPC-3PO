@@ -35,8 +35,6 @@ def get_prefix(bot, msg):
         return '!'
     else:
         mycursor = mydb.cursor()
-        print(msg.guild.id)
         mycursor.execute(f'SELECT prefix FROM guild WHERE serverid = "{msg.guild.id}" LIMIT 1')
         data = mycursor.fetchone()
-        print(data)
         return str(data[0])
