@@ -7,13 +7,6 @@ import mysql.connector
 load_dotenv()
 USER = os.getenv("USER")
 
-mydb = mysql.connector.connect(
-    host=os.getenv("host"),
-    user=os.getenv("user"),
-    password=os.getenv("password"),
-    database=os.getenv("database")
-)
-
 @sleep_and_retry
 @limits(calls=45, period=30)
 def api_call(url):
@@ -34,7 +27,24 @@ def get_prefix(bot, msg):
     if msg.guild is None:
         return '!'
     else:
+        mydb = connector()
         mycursor = mydb.cursor()
         mycursor.execute(f'SELECT prefix FROM guild WHERE serverid = "{msg.guild.id}" LIMIT 1')
         data = mycursor.fetchone()
         return str(data[0])
+
+def get_log(id):
+    mydb = connector()
+    mycursor = mydb.cursor()
+    mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{id}" LIMIT 1')
+    data = mycursor.fetchone()
+    return int(data[0])
+    
+def connector():
+    mydb = mysql.connector.connect(
+        host=os.getenv("host"),
+        user=os.getenv("user"),
+        password=os.getenv("password"),
+        database=os.getenv("database")
+    )
+    return mydb

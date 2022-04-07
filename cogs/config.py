@@ -1,18 +1,7 @@
 import discord
 from discord.ext import commands
-import json
-import os
-from dotenv import load_dotenv
-import mysql.connector
 
-load_dotenv()
-
-mydb = mysql.connector.connect(
-    host=os.getenv("host"),
-    user=os.getenv("user"),
-    password=os.getenv("password"),
-    database=os.getenv("database")
-)
+from functions import connector,get_log
 
 
 class config(commands.Cog):
@@ -23,20 +12,18 @@ class config(commands.Cog):
     #Events
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
+        mydb = connector()
         mycursor = mydb.cursor()
-        
         sql = ("INSERT INTO guild (serverid, prefix) VALUES (%s, %s)")
         val = (f"{guild.id}", "!")
         mycursor.execute(sql, val)
-
         mydb.commit()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
+        mydb = connector()
         mycursor = mydb.cursor()
-
         mycursor.execute(f'DELETE FROM ns.guild WHERE serverid = "{guild.id}"')
-
         mydb.commit()
 
     #Commands
@@ -47,12 +34,10 @@ class config(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def changeprefix(self, ctx, *, prefix):
+        mydb = connector()
         mycursor = mydb.cursor()
-
         mycursor.execute(f'UPDATE guild SET prefix = "{prefix}" WHERE serverid = "{ctx.guild.id}"')
-        
         mydb.commit()
-
         await ctx.send(f"Prefix changed to '{prefix}'")
 
     @changeprefix.error
@@ -61,6 +46,16 @@ class config(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a new bot prefix.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def log(self, ctx, *, id):
+        mydb = connector()
+        mycursor = mydb.cursor()
+        mycursor.execute(f'UPDATE guild SET logchannel = "{id}" WHERE serverid = "{ctx.guild.id}"')
+        mydb.commit()
+        log = self.bot.get_channel(get_log(ctx.guild.id))
+        await log.send("This channel is now the log channel.")
 
     @commands.command()
     async def help(self, ctx, cog=""):
@@ -94,6 +89,7 @@ class config(commands.Cog):
         elif cog == "config":
             embed = discord.Embed(title="Config", colour=color)
             embed.add_field(name="changeprefix",value="Changes the bot's server command prefix.\nUsage: !changeprefix [prefix]", inline=False)
+            embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
             embed.add_field(name="help",value="Displays information about a set of commands. \nUsage: !help [nsinfo/verification/admin/config]", inline=False)
             embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
             await ctx.send(embed=embed)
