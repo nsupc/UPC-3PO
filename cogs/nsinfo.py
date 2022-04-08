@@ -26,7 +26,6 @@ class nsinfo(commands.Cog):
 
         return '{:.3g}{}'.format(n / 10**(3 * millidx), millnames[millidx])
 
-
     #Commands
     @commands.command()
     async def nation(self, ctx, *, msg):
@@ -48,7 +47,13 @@ class nsinfo(commands.Cog):
         except:
             await ctx.send("Invalid nation, please try again.")
 
+    @nation.error
+    async def nation_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
+
     @commands.command()
+    @commands.bot_has_permissions(attach_files=True)
     async def endotart(self, ctx, *, nation):
         mydb = connector()
         nat = nation.lower().replace(" ","_")
@@ -83,8 +88,16 @@ class nsinfo(commands.Cog):
 
         await ctx.send(file=discord.File(path))
         os.remove(path)
-    
+
+    @endotart.error
+    async def endotart_error(self, ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            await ctx.send("Sorry, I don't have permission to upload files in this server.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
+
     @commands.command()
+    @commands.bot_has_permissions(attach_files=True)
     async def nne(self, ctx, *, nation):
         mydb = connector()
         nat = nation.lower().replace(" ","_")
@@ -124,6 +137,13 @@ class nsinfo(commands.Cog):
         await ctx.send(file=discord.File(path))
         os.remove(path)
 
+    @nne.error
+    async def nne_error(self, ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            await ctx.send("Sorry, I don't have permission to upload files in this server.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
+
     @commands.command()
     async def s1(self, ctx, *, nation):
         nat = nation.lower().replace(" ","_")
@@ -149,6 +169,11 @@ class nsinfo(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @s1.error
+    async def s1_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
+
     @commands.command()
     async def s2(self, ctx, *, nation):
         nat = nation.lower().replace(" ","_")
@@ -173,6 +198,11 @@ class nsinfo(commands.Cog):
         embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
 
         await ctx.send(embed=embed)
+
+    @s2.error
+    async def s2_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
 
     @commands.command()
     async def region(self, ctx, *, region):
@@ -201,8 +231,14 @@ class nsinfo(commands.Cog):
             await ctx.send(embed=embed)
         except:
             await ctx.send("Invalid region, please try again.")
-    
+
+    @region.error
+    async def region_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a region.")
+
     @commands.command()
+    @commands.bot_has_permissions(attach_files=True)
     async def activity(self, ctx, *, region):
         mydb = connector()
         mycursor = mydb.cursor()
@@ -244,6 +280,13 @@ class nsinfo(commands.Cog):
         embed.set_image(url=f"attachment://{path}")
         await ctx.send(file= file, embed=embed)
         os.remove(path)
+
+    @activity.error
+    async def activity_error(self, ctx, error):
+        if isinstance(error, commands.BotMissingPermissions):
+            await ctx.send("Sorry, I don't have permission to upload files in this server.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
 
 def setup(bot):
     bot.add_cog(nsinfo(bot))
