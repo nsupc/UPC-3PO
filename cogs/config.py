@@ -82,6 +82,7 @@ class config(commands.Cog):
             embed = discord.Embed(title="Admin Tools", colour=color)
             embed.add_field(name="kick",value="Kicks a user from the server.\nUsage: !kick [user] [optional reason]", inline=False)
             embed.add_field(name="ban",value="Bans a user from the server.\nUsage: !ban [user] [optional reason]", inline=False)
+            embed.add_field(name="ban",value="Unbans a user from the server.\nUsage: !ban [user]", inline=False)
             embed.add_field(name="addrole",value="Adds a role to a user.\nUsage: !addrole [role] [user]", inline=False)
             embed.add_field(name="remrole",value="Removes a role from a user.\nUsage: !remrole [role] [user]", inline=False)
             await ctx.send(embed=embed)
