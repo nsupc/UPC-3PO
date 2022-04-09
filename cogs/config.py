@@ -57,6 +57,13 @@ class config(commands.Cog):
         log = self.bot.get_channel(get_log(ctx.guild.id))
         await log.send("This channel is now the log channel.")
 
+    @log.error
+    async def log_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to perform that command.")
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a channel.")
+
     @commands.command()
     async def help(self, ctx, cog=""):
         color = int("2d0001", 16)
