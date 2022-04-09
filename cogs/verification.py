@@ -55,6 +55,7 @@ class verification(commands.Cog):
             await ctx.send("Hmm, I can't seem to find that nation.")
 
     @commands.command()
+    @commands.has_permissions(kick_members=True)
     async def id(self, ctx, member : commands.MemberConverter):
         mydb = connector()
         mycursor = mydb.cursor()
@@ -67,6 +68,13 @@ class verification(commands.Cog):
         for x in myresult:
             embed.add_field(name="Nation", value=f"https://www.nationstates.net/nation={x[3]}", inline=False)
         await ctx.send(embed=embed)
+
+    @id.error
+    async def id_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to perform that command.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a user.")
 
 def setup(bot):
     bot.add_cog(verification(bot))
