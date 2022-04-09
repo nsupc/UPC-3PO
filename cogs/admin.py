@@ -10,6 +10,42 @@ class admin(commands.Cog):
         self.bot = bot
 
     @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.has_permissions(manage_roles=True)
+    async def addrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
+        await member.add_roles(role)
+        log = self.bot.get_channel(get_log(ctx.guild.id))
+        await log.send(f"{member} was added role '{role}' on <t:{int(time.time())}:F>")
+        await ctx.send(f"{member.name} has been added to {role}.")
+
+    @addrole.error
+    async def addrole_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You don't have permission to use this command.")
+        elif isinstance(error, commands.BotMissingPermissions):
+            await ctx.send("Sorry, I don't have permission to manage roles in this server.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please include both a user and a role.")
+        
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    @commands.has_permissions(manage_roles=True)
+    async def remrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
+        await member.remove_roles(role)
+        log = self.bot.get_channel(get_log(ctx.guild.id))
+        await log.send(f"{member} was removed from role '{role}' on <t:{int(time.time())}:F>")
+        await ctx.send(f"{member.name} has been removed from {role}.")
+
+    @remrole.error
+    async def remrole_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You don't have permission to use this command.")
+        elif isinstance(error, commands.BotMissingPermissions):
+            await ctx.send("Sorry, I don't have permission to manage roles in this server.")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please include both a user and a role.")
+
+    @commands.command()
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
     async def kick(self, ctx, member : commands.MemberConverter, *, reason = "None"):
