@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import mysql.connector
 
 load_dotenv()
-USER = os.getenv("USER")
+USER = os.getenv("AGENT")
 
 @sleep_and_retry
 @limits(calls=45, period=30)
