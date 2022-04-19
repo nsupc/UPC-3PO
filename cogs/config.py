@@ -86,7 +86,7 @@ class config(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a cog.")
+            await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -110,7 +110,7 @@ class config(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a cog.")
+            await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
 
     @commands.command()
     async def help(self, ctx, cog=""):
