@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import time
 
-from functions import api_call,updated,connector
+from functions import api_call,updated,connector,get_cogs
 
 load_dotenv()
 
@@ -27,8 +27,16 @@ class nsinfo(commands.Cog):
 
         return '{:.3g}{}'.format(n / 10**(3 * millidx), millnames[millidx])
 
+    #Checks
+    def isLoaded():
+        async def predicate(ctx):
+            r = get_cogs(ctx.guild.id)
+            return "n" in r
+        return commands.check(predicate)
+
     #Commands
     @commands.command()
+    @isLoaded()
     async def nation(self, ctx, *, msg):
         try:
             nat = msg.lower().replace(" ","_")
@@ -54,6 +62,7 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a nation.")
 
     @commands.command()
+    @isLoaded()
     @commands.bot_has_permissions(attach_files=True)
     async def endotart(self, ctx, *, nation):
         mydb = connector()
@@ -98,6 +107,7 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a nation.")
 
     @commands.command()
+    @isLoaded()
     @commands.bot_has_permissions(attach_files=True)
     async def nne(self, ctx, *, nation):
         mydb = connector()
@@ -146,6 +156,7 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a nation.")
 
     @commands.command()
+    @isLoaded()
     async def s1(self, ctx, *, nation):
         nat = nation.lower().replace(" ","_")
 
@@ -176,6 +187,7 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a nation.")
 
     @commands.command()
+    @isLoaded()
     async def s2(self, ctx, *, nation):
         nat = nation.lower().replace(" ","_")
 
@@ -206,6 +218,7 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a nation.")
 
     @commands.command()
+    @isLoaded()
     async def region(self, ctx, *, region):
         try:
             reg = region.lower().replace(" ","_")
@@ -239,6 +252,7 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a region.")
 
     @commands.command()
+    @isLoaded()
     @commands.bot_has_permissions(attach_files=True)
     async def activity(self, ctx, *, region):
         mydb = connector()

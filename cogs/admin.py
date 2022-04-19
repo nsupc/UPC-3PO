@@ -2,14 +2,23 @@ import discord
 from discord.ext import commands
 import time
 
-from functions import get_log
+from functions import get_log,get_cogs
 
 class admin(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
+    #Checks
+    def isLoaded():
+        async def predicate(ctx):
+            r = get_cogs(ctx.guild.id)
+            return "n" in r
+        return commands.check(predicate)
+
+    #Commands
     @commands.command()
+    @isLoaded()
     @commands.has_permissions(manage_roles=True)
     @commands.has_permissions(manage_roles=True)
     async def addrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
@@ -28,6 +37,7 @@ class admin(commands.Cog):
             await ctx.send("Please include both a user and a role.")
         
     @commands.command()
+    @isLoaded()
     @commands.has_permissions(manage_roles=True)
     @commands.has_permissions(manage_roles=True)
     async def remrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
@@ -46,6 +56,7 @@ class admin(commands.Cog):
             await ctx.send("Please include both a user and a role.")
 
     @commands.command()
+    @isLoaded()
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
     async def kick(self, ctx, member : commands.MemberConverter, *, reason = "None"):
@@ -66,6 +77,7 @@ class admin(commands.Cog):
             ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
+    @isLoaded()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     async def ban(self, ctx, member : commands.MemberConverter, *, reason = "None"):
@@ -86,6 +98,7 @@ class admin(commands.Cog):
             ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
+    @isLoaded()
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     async def unban(self, ctx, *, member):

@@ -4,7 +4,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import time
 
-from functions import api_call,connector
+from functions import api_call,connector,get_cogs
 
 load_dotenv()
 
@@ -13,7 +13,16 @@ class verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    #Checks
+    def isLoaded():
+        async def predicate(ctx):
+            r = get_cogs(ctx.guild.id)
+            return "v" in r
+        return commands.check(predicate)
+
+    #Commands
     @commands.command()
+    @isLoaded()
     async def verify(self, ctx, *, nation):
         mydb = connector()
         nat = nation.lower().replace(" ", "_")
@@ -32,7 +41,6 @@ class verification(commands.Cog):
                         mydb.commit()
                         await ctx.author.send("Hello and welcome to the UPC-3PO verification system!\nPlease go to https://www.nationstates.net/page=verify_login while signed in as '{}' and dm me the code that you see there.\nThank you!".format(nation))
                         msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                        await ctx.send("1")
                         code = str(msg.content)
                         try:
                             mycursor.execute("SELECT * FROM reg WHERE userid = '{}' AND serverid = '{}' ORDER BY timestamp ASC LIMIT 1".format(ctx.author.id, ctx.guild.id))
@@ -55,6 +63,7 @@ class verification(commands.Cog):
             await ctx.send("Hmm, I can't seem to find that nation.")
 
     @commands.command()
+    @isLoaded()
     @commands.has_permissions(kick_members=True)
     async def id(self, ctx, member : commands.MemberConverter):
         mydb = connector()
@@ -65,6 +74,7 @@ class verification(commands.Cog):
         color = int("2d0001", 16)
 
         embed=discord.Embed(title=f"Verified identities of {member.name}", color=color)
+        embed.add_field(name="User", value=f"<@{member.id}>")
         for x in myresult:
             embed.add_field(name="Nation", value=f"https://www.nationstates.net/nation={x[3]}", inline=False)
         await ctx.send(embed=embed)
