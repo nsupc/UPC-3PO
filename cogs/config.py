@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from functions import connector,get_log
+from functions import connector,get_log,get_cogs
 
 
 class config(commands.Cog):
@@ -14,8 +14,8 @@ class config(commands.Cog):
     async def on_guild_join(self, guild):
         mydb = connector()
         mycursor = mydb.cursor()
-        sql = ("INSERT INTO guild (serverid, prefix) VALUES (%s, %s)")
-        val = (f"{guild.id}", "!")
+        sql = ("INSERT INTO guild (serverid, prefix, cogs) VALUES (%s, %s, %s)")
+        val = (f"{guild.id}", "!", "nva")
         mycursor.execute(sql, val)
         mydb.commit()
 
@@ -65,6 +65,40 @@ class config(commands.Cog):
             await ctx.send("Please select a channel.")
 
     @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def addcog(self, ctx, cog):
+        r = get_cogs(ctx.guild.id)
+        c = cog[0]
+        if c not in "anv":
+            await ctx.send("That is not a valid option.")
+            return
+        elif c in r:
+            await ctx.send("Cog already loaded.")
+        else: 
+            mydb = connector()
+            mycursor = mydb.cursor()
+            mycursor.execute(f'UPDATE guild SET cogs = "{r + c}" WHERE serverid = "{ctx.guild.id}"')
+            mydb.commit()
+            await ctx.send("Cog loaded.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def remcog(self, ctx, cog):
+        r = get_cogs(ctx.guild.id)
+        c = cog[0]
+        if c not in "anv":
+            await ctx.send("That is not a valid option.")
+            return
+        elif c not in r:
+            await ctx.send("Cog already unloaded.")
+        else: 
+            mydb = connector()
+            mycursor = mydb.cursor()
+            mycursor.execute(f'UPDATE guild SET cogs = "{r.replace(c, "")}" WHERE serverid = "{ctx.guild.id}"')
+            mydb.commit()
+            await ctx.send("Cog unloaded.")
+
+    @commands.command()
     async def help(self, ctx, cog=""):
         color = int("2d0001", 16)
 
@@ -98,6 +132,8 @@ class config(commands.Cog):
             embed = discord.Embed(title="Config", colour=color)
             embed.add_field(name="changeprefix",value="Changes the bot's server command prefix.\nUsage: !changeprefix [prefix]", inline=False)
             embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
+            embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
+            embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
             embed.add_field(name="help",value="Displays information about a set of commands. \nUsage: !help [nsinfo/verification/admin/config]", inline=False)
             embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
             await ctx.send(embed=embed)
