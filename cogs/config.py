@@ -81,6 +81,13 @@ class config(commands.Cog):
             mydb.commit()
             await ctx.send("Cog loaded.")
 
+    @addcog.error
+    async def addcog_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to perform that command.")
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a cog.")
+
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def remcog(self, ctx, cog):
@@ -97,6 +104,13 @@ class config(commands.Cog):
             mycursor.execute(f'UPDATE guild SET cogs = "{r.replace(c, "")}" WHERE serverid = "{ctx.guild.id}"')
             mydb.commit()
             await ctx.send("Cog unloaded.")
+
+    @remcog.error
+    async def remcog_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to perform that command.")
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a cog.")
 
     @commands.command()
     async def help(self, ctx, cog=""):
