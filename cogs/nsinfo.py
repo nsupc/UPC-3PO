@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import math
 import matplotlib.pyplot as plt
 import os
+import time
 
 from functions import api_call,updated,connector
 
@@ -208,19 +209,19 @@ class nsinfo(commands.Cog):
     async def region(self, ctx, *, region):
         try:
             reg = region.lower().replace(" ","_")
-            r = bs((await api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?region={reg}&q=name+power+numnations+delegate+delegatevotes+flag+founder')).text, 'xml')
+            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?region={reg}&q=name+power+numnations+delegate+delegatevotes+flag+founder').text, 'xml')
 
             color = int("2d0001", 16)
 
             embed=discord.Embed(title=r.NAME.text, url=f"https://nationstates.net/region={reg}", color=color)
             embed.set_thumbnail(url=r.FLAG.text)
             if r.FOUNDER.text != "0":
-                fr = bs((await api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name')).text, 'xml')
+                fr = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
                 embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
             else:
                 embed.add_field(name="Founder", value="None", inline=True)
             if r.DELEGATE.text != "0":
-                dr = bs((await api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.DELEGATE.text}&q=name')).text, 'xml')
+                dr = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.DELEGATE.text}&q=name').text, 'xml')
                 embed.add_field(name="Delegate", value=f"[{dr.NAME.text}](https://nationstates.net/nation={r.DELEGATE.text})", inline=True)
             else:
                 embed.add_field(name="Delegate", value="None", inline=True)
@@ -286,14 +287,7 @@ class nsinfo(commands.Cog):
         if isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-
-    @commands.command()
-    async def test(self, ctx):
-        await ctx.send("1")
-        r = bs((await api_call("https://www.nationstates.net/cgi-bin/api.cgi?nation=yupsie")).text, "xml").NAME.text
-        await ctx.send(r)
-        await ctx.send("2")
+            await ctx.send("Please select a nation.") 
 
 def setup(bot):
     bot.add_cog(nsinfo(bot))
