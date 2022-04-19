@@ -39,6 +39,13 @@ def get_log(id):
     mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{id}" LIMIT 1')
     data = mycursor.fetchone()
     return int(data[0])
+
+def get_cogs(id):
+    mydb = connector()
+    mycursor = mydb.cursor()
+    mycursor.execute(f'SELECT cogs FROM guild WHERE serverid = "{id}" LIMIT 1')
+    data = mycursor.fetchone()
+    return data[0]
     
 def connector():
     mydb = mysql.connector.connect(
