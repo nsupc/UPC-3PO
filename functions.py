@@ -9,7 +9,7 @@ USER = os.getenv("AGENT")
 
 @sleep_and_retry
 @limits(calls=45, period=30)
-def api_call(url):
+async def api_call(url):
     headers = {"User-Agent": USER}
     r = requests.get(url, headers=headers, allow_redirects=True)
 

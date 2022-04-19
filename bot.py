@@ -13,7 +13,7 @@ bot = commands.Bot(command_prefix = get_prefix)
 bot.remove_command("help")
 
 #Cogs
-default_cogs = ['example','nsinfo','verification','admin','config']
+default_cogs = ['nsinfo','verification','admin','config']
 for x in default_cogs:
     bot.load_extension(f"cogs.{x}")
 
