@@ -1,27 +1,19 @@
-from unicodedata import name
 import xml.etree.ElementTree as ET
 import mysql.connector
 from dotenv import load_dotenv
 import os
-import requests
 import gzip
-from datetime import datetime as dt
 import time
 
-from functions import api_call
+
+from functions import api_call,connector
 
 load_dotenv()
 
-mydb = mysql.connector.connect(
-  host=os.getenv("host"),
-  user=os.getenv("user"),
-  password=os.getenv("password"),
-  database=os.getenv("database")
-)
+mydb = connector()
 
 mycursor = mydb.cursor()
 
-headers = {"User-Agent": "The United Peoples of Centrism"}
 r = api_call("https://www.nationstates.net/pages/nations.xml.gz")
 open('nations.xml.gz', "wb").write(r.content)
 
