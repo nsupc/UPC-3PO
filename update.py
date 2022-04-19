@@ -30,7 +30,11 @@ with gzip.open("nations.xml.gz","rb") as ip_byte:
     op.write(ip_byte.read().decode("utf-8"))
 ip_byte.close()
 
-mycursor.execute("DELETE FROM nations")
+mycursor.execute("DROP TABLE nations")
+
+mycursor.execute("CREATE TABLE nations (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), type VARCHAR(255), motto VARCHAR(255), category VARCHAR(255), unstatus VARCHAR(255), numendos SMALLINT(10), issues SMALLINT(10), region VARCHAR(255), population INT(10), founded INT(25), lastlogin INT(25), influence VARCHAR(255), dbid INT(25), endorsements LONGTEXT)")
+
+#mycursor.execute("DELETE FROM nations")
 
 tree = ET.parse("nations.xml")
 root = tree.getroot()
