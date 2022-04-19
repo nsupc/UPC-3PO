@@ -45,13 +45,15 @@ def sqlguild():
     mydb = connector()
     mycursor = mydb.cursor()
     
-    mycursor.execute("DROP TABLE guild")
+    #mycursor.execute("DROP TABLE guild")
     
-    mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500))")
+    #mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500))")
 
-    #sql = ("INSERT INTO guild (serverid, prefix) VALUES (%s, %s)")
-    #val = ("", "!")
+    #sql = ("INSERT INTO guild (serverid, prefix, cogs) VALUES (%s, %s, %s)")
+    #val = ("", "!", "nva")
     #mycursor.execute(sql, val)
+
+    #mycursor.execute("ALTER TABLE guild ADD cogs VARCHAR(30)")
 
     mydb.commit()
 
