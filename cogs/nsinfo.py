@@ -158,28 +158,23 @@ class nsinfo(commands.Cog):
     @commands.command()
     @isLoaded()
     async def s1(self, ctx, *, nation):
-        nat = nation.lower().replace(" ","_")
+        mydb = connector()
+        mycursor = mydb.cursor()
 
+        mycursor.execute(f'SELECT dbid FROM s1 WHERE name = "{nation}"')
         try:
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}').text, "xml").DBID.text
+            dbid = str(mycursor.fetchone()[0])
+            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=1').text, 'xml')
+
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=1", description=f'"{r.SLOGAN.text}"', color=color)
+            embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s1/{r.FLAG.text}")
+            embed.add_field(name="Market Value", value=r.MARKET_VALUE.text, inline=True)
+            embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
+
+            await ctx.send(embed=embed)
         except:
-            await ctx.send(f"Uh oh, I can't find the nation {nation}")
-            return
-
-        try:
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={r};season=1').text, 'xml')
-            name = r.NAME.text
-        except:
-            await ctx.send(f'{nation} does not have a Season 1 Trading Card.')
-            return
-
-        color = int("2d0001", 16)
-        embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=1", description=f'"{r.SLOGAN.text}"', color=color)
-        embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s1/{r.FLAG.text}")
-        embed.add_field(name="Market Value", value=r.MARKET_VALUE.text, inline=True)
-        embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
-
-        await ctx.send(embed=embed)
+            await ctx.send(f"{nation} does not have a Season 1 Trading Card.")
 
     @s1.error
     async def s1_error(self, ctx, error):
@@ -199,7 +194,6 @@ class nsinfo(commands.Cog):
 
         try:
             r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={r};season=2').text, 'xml')
-            name = r.NAME.text
         except:
             await ctx.send(f'{nation} does not have a Season 2 Trading Card.')
             return
