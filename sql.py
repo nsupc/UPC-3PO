@@ -1,8 +1,6 @@
-from unicodedata import name
 import xml.etree.ElementTree as ET
-import mysql.connector
-from dotenv import load_dotenv
-import os
+import gzip
+from bs4 import BeautifulSoup as bs
 
 from functions import connector
 
@@ -45,18 +43,41 @@ def sqlguild():
     mydb = connector()
     mycursor = mydb.cursor()
     
-    #mycursor.execute("DROP TABLE guild")
+    mycursor.execute("DROP TABLE guild")
     
-    #mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500))")
+    mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500), cogs VARCHAR(30))")
 
-    #sql = ("INSERT INTO guild (serverid, prefix, cogs) VALUES (%s, %s, %s)")
-    #val = ("", "!", "nva")
-    #mycursor.execute(sql, val)
+    sql = ("INSERT INTO guild (serverid, prefix, cogs) VALUES (%s, %s, %s)")
+    val = ("839999474184618024", "!", "nva")
+    mycursor.execute(sql, val)
 
     #mycursor.execute("ALTER TABLE guild ADD cogs VARCHAR(30)")
 
     mydb.commit()
 
+def sqls1():
+    mydb = connector()
+    mycursor = mydb.cursor()
+
+    #mycursor.execute("DROP TABLE s1")
+
+    mycursor.execute("CREATE TABLE s1 (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30), dbid INT(25))")
+
+    with open("cardlist_S1.xml") as fp:
+        soup = bs(fp, 'xml')
+        r = soup.find_all("CARD")
+
+    for x in r:
+        sql = ("INSERT INTO s1 (name, dbid) VALUES (%s, %s)")
+        val = (x.NAME.text, x.ID.text)
+        mycursor.execute(sql, val)
+        print(x.NAME.text)
+
+    mydb.commit()
+
+    print(mycursor.rowcount, "record(s) inserted.")
+
 #sqlnat()
 #sqlreg()
 #sqlguild()
+sqls1()
