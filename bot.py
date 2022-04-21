@@ -73,7 +73,7 @@ async def reload_error(ctx, error):
 @isUPC()
 async def kill(ctx):
     await ctx.send("Shutting down.")
-    await bot.logout()
+    await bot.close()
 
 @kill.error
 async def kill_error(ctx, error):
