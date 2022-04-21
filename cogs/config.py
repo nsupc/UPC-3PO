@@ -122,7 +122,7 @@ class config(commands.Cog):
         embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
         embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
         embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
-        embed.add_field(name="help",value="Displays information about a set of commands. \nUsage: !help [nsinfo/verification/admin/config]", inline=False)
+        embed.add_field(name="help",value="Displays information about the commands that are loaded in this server.", inline=False)
         embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
         await ctx.send(embed=embed)
 
@@ -148,8 +148,8 @@ class config(commands.Cog):
             embed.add_field(name="kick",value="Kicks a user from the server.\nUsage: !kick [user] [optional reason]", inline=False)
             embed.add_field(name="ban",value="Bans a user from the server.\nUsage: !ban [user] [optional reason]", inline=False)
             embed.add_field(name="ban",value="Unbans a user from the server.\nUsage: !ban [user]", inline=False)
-            embed.add_field(name="addrole",value="Adds a role to a user.\nUsage: !addrole [user] [role]", inline=False)
-            embed.add_field(name="remrole",value="Removes a role from a user.\nUsage: !remrole [user] [role]", inline=False)
+            embed.add_field(name="addrole",value="Adds a role to a user.\nUsage: !addrole [user] '[role]'", inline=False)
+            embed.add_field(name="remrole",value="Removes a role from a user.\nUsage: !remrole [user] '[role]'", inline=False)
             await ctx.send(embed=embed)
 
 def setup(bot):
