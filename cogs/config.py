@@ -113,10 +113,20 @@ class config(commands.Cog):
             await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
 
     @commands.command()
-    async def help(self, ctx, cog=""):
+    async def help(self, ctx):
+        c = get_cogs(ctx.guild.id)
         color = int("2d0001", 16)
 
-        if cog == "nsinfo":
+        embed = discord.Embed(title="Config", colour=color)
+        embed.add_field(name="changeprefix",value="Changes the bot's server command prefix.\nUsage: !changeprefix [prefix]", inline=False)
+        embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
+        embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
+        embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
+        embed.add_field(name="help",value="Displays information about a set of commands. \nUsage: !help [nsinfo/verification/admin/config]", inline=False)
+        embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
+        await ctx.send(embed=embed)
+
+        if "n" in c:
             embed = discord.Embed(title="NSInfo", colour=color)
             embed.add_field(name="nation",value="Displays information about a NationStates nation.\nUsage: !nation [nation]", inline=False)
             embed.add_field(name="endotart",value="Outputs an HTML sheet containing links to every nation in a region not being endorsed by a nation, as listed in the region's Daily Dump.\nUsage: !endotart [nation]", inline=False)
@@ -127,13 +137,13 @@ class config(commands.Cog):
             embed.add_field(name="activity",value="Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: !activity [region]", inline=False)
             await ctx.send(embed=embed)
 
-        elif cog == "verification":
+        if "v" in c:
             embed = discord.Embed(title="Verification", colour=color)
             embed.add_field(name="verify",value="Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: !verify [nation]", inline=False)
             embed.add_field(name="id",value="Displays NationStates nations associated with a particular Discord user.\nUsage: !id [Discord ID]", inline=False)
             await ctx.send(embed=embed)
 
-        elif cog == "admin":
+        if "a" in c:
             embed = discord.Embed(title="Admin Tools", colour=color)
             embed.add_field(name="kick",value="Kicks a user from the server.\nUsage: !kick [user] [optional reason]", inline=False)
             embed.add_field(name="ban",value="Bans a user from the server.\nUsage: !ban [user] [optional reason]", inline=False)
@@ -141,19 +151,6 @@ class config(commands.Cog):
             embed.add_field(name="addrole",value="Adds a role to a user.\nUsage: !addrole [user] [role]", inline=False)
             embed.add_field(name="remrole",value="Removes a role from a user.\nUsage: !remrole [user] [role]", inline=False)
             await ctx.send(embed=embed)
-            
-        elif cog == "config":
-            embed = discord.Embed(title="Config", colour=color)
-            embed.add_field(name="changeprefix",value="Changes the bot's server command prefix.\nUsage: !changeprefix [prefix]", inline=False)
-            embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
-            embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
-            embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
-            embed.add_field(name="help",value="Displays information about a set of commands. \nUsage: !help [nsinfo/verification/admin/config]", inline=False)
-            embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
-            await ctx.send(embed=embed)
-
-        else:
-            await ctx.send("Please specify which command set you wish the help module for. The options are nsinfo, verification, admin, or config.")
 
 def setup(bot):
     bot.add_cog(config(bot))
