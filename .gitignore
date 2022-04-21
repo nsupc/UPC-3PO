@@ -6,3 +6,4 @@ extra.py
 limit.py
 *.pyc
 cogs/example.py
+.DS_Store

@@ -5,7 +5,6 @@ import os
 import gzip
 import time
 
-
 from functions import api_call,connector
 
 load_dotenv()
@@ -39,7 +38,7 @@ for child in root:
     sql = "INSERT INTO nations (name, type, motto, category, unstatus, numendos, issues, region, population, founded, lastlogin, influence, dbid, endorsements) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     val = (child[0].text, child[1].text, child[3].text, child[4].text, child[5].text, endos, child[7].text, child[9].text, child[10].text, child[22].text, child[23].text, child[25].text, child[34].text, ",{},".format(child[6].text))
     mycursor.execute(sql, val)
-
+    
 mydb.commit()
 
 mycursor.execute("SELECT COUNT(NAME) FROM nations")
@@ -50,6 +49,6 @@ w = open("update.txt", "w")
 w.write(str(int(time.time())))
 w.close()
 
-#os.remove("nations.xml")
+os.remove("nations.xml")
 os.remove("nations.xml.gz")
 
