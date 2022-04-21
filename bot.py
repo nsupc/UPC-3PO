@@ -39,6 +39,8 @@ async def load(ctx, extension):
 async def load_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You do not have permission to run that command.")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please select an extension.")
 
 @bot.command()
 @isUPC()
@@ -50,6 +52,8 @@ async def unload(ctx, extension):
 async def unload_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You do not have permission to run that command.")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please select an extension.")
 
 @bot.command()
 @isUPC()
@@ -62,7 +66,19 @@ async def reload(ctx, extension):
 async def reload_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You do not have permission to run that command.")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please select an extension.")
 
-#if you don't add any other commands in here, fold all three errors into instead of repeating three times.
+@bot.command()
+@isUPC()
+async def kill(ctx):
+    await ctx.send("Shutting down.")
+    await bot.logout()
+
+@kill.error
+async def kill_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send("You do not have permission to run that command.")
+
 
 bot.run(TOKEN)
