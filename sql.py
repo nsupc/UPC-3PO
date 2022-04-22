@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup as bs
 
 from functions import connector
 
-
 def sqlnat():
     mydb = connector()
     mycursor = mydb.cursor()
@@ -43,15 +42,13 @@ def sqlguild():
     mydb = connector()
     mycursor = mydb.cursor()
     
-    mycursor.execute("DROP TABLE guild")
+    #mycursor.execute("DROP TABLE guild")
     
-    mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcome VARCHAR(500), cogs VARCHAR(30))")
+    #mycursor.execute("CREATE TABLE guild (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(40), serverid VARCHAR(30), prefix VARCHAR(10), logchannel VARCHAR(30), welcomechannel VARCHAR(30), welcome VARCHAR(500), cogs VARCHAR(30))")
 
-    sql = ("INSERT INTO guild (serverid, prefix, cogs) VALUES (%s, %s, %s)")
-    val = ("839999474184618024", "!", "nva")
+    sql = ("INSERT INTO guild (name, serverid, prefix, cogs) VALUES (%s, %s, %s, %s)")
+    val = ("VERY REAL REGION", "949358173444243546", "!", "nva")
     mycursor.execute(sql, val)
-
-    #mycursor.execute("ALTER TABLE guild ADD cogs VARCHAR(30)")
 
     mydb.commit()
 
@@ -84,5 +81,5 @@ def sqls2():
 
 #sqlnat()
 #sqlreg()
-#sqlguild()
+sqlguild()
 #sqls2()
