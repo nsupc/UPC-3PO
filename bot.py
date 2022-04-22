@@ -9,7 +9,8 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 ID = int(os.getenv("ID"))
 
-bot = commands.Bot(command_prefix = get_prefix)
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix=get_prefix, intents=intents)
 bot.remove_command("help")
 
 #Cogs
