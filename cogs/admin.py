@@ -13,7 +13,7 @@ class admin(commands.Cog):
     def isLoaded():
         async def predicate(ctx):
             r = get_cogs(ctx.guild.id)
-            return "n" in r
+            return "a" in r
         return commands.check(predicate)
 
     #Commands
@@ -110,12 +110,8 @@ class admin(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     async def unban(self, ctx, *, member):
-        await ctx.send("1")
         banned_users = await ctx.guild.bans()
-        await ctx.send("2")
         name, discriminator = member.split("#")
-        await ctx.send(name)
-        await ctx.send(discriminator)
         for entry in banned_users:
             user = entry.user
             if(user.name, user.discriminator) == (name, discriminator):
