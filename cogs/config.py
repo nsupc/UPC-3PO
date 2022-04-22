@@ -11,11 +11,20 @@ class config(commands.Cog):
 
     #Events
     @commands.Cog.listener()
+    async def on_member_join(self, member):
+        mydb = connector()
+        mycursor = mydb.cursor()
+        mycursor.execute(f"SELECT welcomechannel, welcome FROM guild WHERE serverid = '{member.guild.id}' LIMIT 1")
+        x = mycursor.fetchone()
+        welcome = self.bot.get_channel(int(x[0]))
+        await welcome.send(f"{member.mention}{x[1]}")
+
+    @commands.Cog.listener()
     async def on_guild_join(self, guild):
         mydb = connector()
         mycursor = mydb.cursor()
-        sql = ("INSERT INTO guild (serverid, prefix, cogs) VALUES (%s, %s, %s)")
-        val = (f"{guild.id}", "!", "nva")
+        sql = ("INSERT INTO guild (name, serverid, prefix, cogs) VALUES (%s, %s, %s, %s)")
+        val = (f'{guild.name}', f'{guild.id}', '!', 'nva')
         mycursor.execute(sql, val)
         mydb.commit()
 
@@ -23,13 +32,17 @@ class config(commands.Cog):
     async def on_guild_remove(self, guild):
         mydb = connector()
         mycursor = mydb.cursor()
-        mycursor.execute(f'DELETE FROM ns.guild WHERE serverid = "{guild.id}"')
+        mycursor.execute(f'DELETE FROM guild WHERE serverid = "{guild.id}"')
         mydb.commit()
 
     #Commands
     @commands.command()
     async def ping(self, ctx):
         await ctx.send(f'Ping: {round(self.bot.latency * 1000)} ms')
+
+    @commands.command()
+    async def name(self, ctx):
+        await ctx.send(f'name: {ctx.guild.name}')
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -63,6 +76,33 @@ class config(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a channel.")
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def welcome(self, ctx):
+        try:
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+            await ctx.send("Which channel would you like to set as the welcome channel?")
+            wid = await self.bot.wait_for('message', timeout=60.0, check=check)
+            try:
+                welcome = self.bot.get_channel(int(wid.content))
+                await welcome.send("This channel has been set as the welcome channel")
+                mydb = connector()
+                mycursor = mydb.cursor()
+                mycursor.execute(f'UPDATE guild SET welcomechannel = "{wid.content}" WHERE serverid = "{ctx.guild.id}"')
+                await ctx.send("What would you like the welcome message to be? 500 characters max.\nPS: I will prepend your message by pinging the new user, so you should set your message to begin with something like ', welcome...'")
+                wcontent = await self.bot.wait_for('message', timeout=60.0, check=check)
+                try:
+                    mycursor.execute(f"UPDATE guild SET welcome = '{wcontent.content}' WHERE serverid = '{ctx.guild.id}'")
+                    mydb.commit()
+                    await ctx.send(f"``{wcontent.content}`` has been set as this server's welcome message.")
+                except:
+                    await ctx.send("Something has gone wrong, please try again.")
+            except:
+                await ctx.send("Sorry, that channel doesn't exist or I can't see it.")
+        except:
+            await ctx.send("Sorry, you ran out of time. If you want to set up a welcome channel and message, please retry.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -147,7 +187,7 @@ class config(commands.Cog):
             embed = discord.Embed(title="Admin Tools", colour=color)
             embed.add_field(name="kick",value="Kicks a user from the server.\nUsage: !kick [user] [optional reason]", inline=False)
             embed.add_field(name="ban",value="Bans a user from the server.\nUsage: !ban [user] [optional reason]", inline=False)
-            embed.add_field(name="ban",value="Unbans a user from the server.\nUsage: !ban [user]", inline=False)
+            embed.add_field(name="unban",value="Unbans a user from the server.\nUsage: !ban [user]", inline=False)
             embed.add_field(name="addrole",value="Adds a role to a user.\nUsage: !addrole [user] '[role]'", inline=False)
             embed.add_field(name="remrole",value="Removes a role from a user.\nUsage: !remrole [user] '[role]'", inline=False)
             await ctx.send(embed=embed)
