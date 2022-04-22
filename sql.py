@@ -55,20 +55,25 @@ def sqlguild():
 
     mydb.commit()
 
-def sqls1():
+def sqls2():
     mydb = connector()
     mycursor = mydb.cursor()
 
-    #mycursor.execute("DROP TABLE s1")
+    op = open("cardlist_S2.xml", "w", encoding="utf-8")
+    with gzip.open("cardlist_S2.xml.gz","rb") as ip_byte:
+        op.write(ip_byte.read().decode("latin-1"))
+    ip_byte.close()
 
-    mycursor.execute("CREATE TABLE s1 (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30), dbid INT(25))")
+    mycursor.execute("DROP TABLE s2")
 
-    with open("cardlist_S1.xml") as fp:
+    mycursor.execute("CREATE TABLE s2 (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30), dbid INT(25))")
+
+    with open("cardlist_S2.xml", encoding="utf-8") as fp:
         soup = bs(fp, 'xml')
         r = soup.find_all("CARD")
 
     for x in r:
-        sql = ("INSERT INTO s1 (name, dbid) VALUES (%s, %s)")
+        sql = ("INSERT INTO s2 (name, dbid) VALUES (%s, %s)")
         val = (x.NAME.text, x.ID.text)
         mycursor.execute(sql, val)
         print(x.NAME.text)
@@ -80,4 +85,4 @@ def sqls1():
 #sqlnat()
 #sqlreg()
 #sqlguild()
-sqls1()
+#sqls2()
