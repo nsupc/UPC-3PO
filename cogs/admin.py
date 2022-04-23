@@ -27,6 +27,8 @@ class admin(commands.Cog):
         log = self.bot.get_channel(get_log(ctx.guild.id))
         if log:
             await log.send(f"<t:{int(time.time())}:F>: {member} was added role '{role}'")
+        else:
+            return
 
     @addrole.error
     async def addrole_error(self, ctx, error):
@@ -49,6 +51,8 @@ class admin(commands.Cog):
         log = self.bot.get_channel(get_log(ctx.guild.id))
         if log:
             await log.send(f"<t:{int(time.time())}:F>: {member} was removed from role '{role}'")
+        else:
+            return
 
     @remrole.error
     async def remrole_error(self, ctx, error):
@@ -71,6 +75,8 @@ class admin(commands.Cog):
         log = self.bot.get_channel(get_log(ctx.guild.id))
         if log:
             await log.send(f"<t:{int(time.time())}:F>: {member} was kicked by {ctx.author} for reason '{reason}'")
+        else:
+            return
 
     @kick.error
     async def kick_error(self, ctx, error):
@@ -93,7 +99,8 @@ class admin(commands.Cog):
         log = self.bot.get_channel(get_log(ctx.guild.id))
         if log:
             await log.send(f"<t:{int(time.time())}:F>: {member} was banned by {ctx.author} for reason '{reason}'")
-
+        else:
+            return
     @ban.error
     async def ban_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
@@ -120,6 +127,8 @@ class admin(commands.Cog):
                 log = self.bot.get_channel(get_log(ctx.guild.id))
                 if log:
                     await log.send(f"<t:{int(time.time())}:F>: {member} was unbanned by {ctx.author}")
+                else:
+                    return
                 return
 
     @unban.error
