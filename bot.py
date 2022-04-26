@@ -81,5 +81,14 @@ async def kill_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You do not have permission to run that command.")
 
+@bot.command()
+@isUPC()
+async def errorsize(ctx):
+    await ctx.send(f"error.txt is currently {os.path.getsize('error.txt')} bytes.")
+
+@errorsize.error
+async def errorsize_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.send("You do not have permission to run that command.")
 
 bot.run(TOKEN)
