@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import time
 
-from functions import get_log,get_cogs
+from functions import get_log,get_cogs,logerror
 
 class admin(commands.Cog):
 
@@ -42,7 +42,10 @@ class admin(commands.Cog):
             await ctx.send("Sorry, I don't have permission to manage roles in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include both a user and a role.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         elif isinstance(error, commands.CommandInvokeError):
+            logerror(ctx, error)
             await ctx.send("I can't do that right now. That role is most likely above mine in this server's role hierarchy.")
         
     @commands.command()
@@ -70,7 +73,10 @@ class admin(commands.Cog):
             await ctx.send("Sorry, I don't have permission to manage roles in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include both a user and a role.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         elif isinstance(error, commands.CommandInvokeError):
+            logerror(ctx, error)
             await ctx.send("I can't do that right now. That role is most likely above mine in this server's role hierarchy.")
 
     @commands.command()
@@ -96,8 +102,10 @@ class admin(commands.Cog):
             await ctx.send("I do not have permission to perform that command.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         else:
-            print(type(error))
+            logerror(ctx, error)
             await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
@@ -124,7 +132,10 @@ class admin(commands.Cog):
             await ctx.send("I do not have permission to perform that command.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         else:
+            logerror(ctx, error)
             await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
@@ -155,8 +166,10 @@ class admin(commands.Cog):
             await ctx.send("I do not have permission to perform that command.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         else:
-            print(error)
+            logerror(ctx, error)
             await ctx.send("Sorry, I can't do that right now.")
 
 def setup(bot):

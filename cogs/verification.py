@@ -4,7 +4,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import time
 
-from functions import api_call,connector,get_cogs
+from functions import api_call,connector,get_cogs,logerror
 
 load_dotenv()
 
@@ -87,9 +87,10 @@ class verification(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         else:
-            print(error)
-            print(type(error))
+            logerror(ctx, error)
 
 def setup(bot):
     bot.add_cog(verification(bot))

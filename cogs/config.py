@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from functions import connector,get_log,get_cogs
+from functions import connector,get_log,get_cogs,logerror
 
 class config(commands.Cog):
 
@@ -54,6 +54,9 @@ class config(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a new bot prefix.")
+        else:
+            logerror(ctx, error)
+            await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -71,6 +74,9 @@ class config(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a channel.")
+        else:
+            logerror(ctx, error)
+            await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -99,6 +105,16 @@ class config(commands.Cog):
         except:
             await ctx.send("Sorry, you ran out of time. If you want to set up a welcome channel and message, please retry.")
 
+    @welcome.error
+    async def welcome_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You do not have permission to perform that command.")
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a channel.")
+        else:
+            logerror(ctx, error)
+            await ctx.send("Sorry, I can't do that right now.")
+
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def addcog(self, ctx, cog):
@@ -122,6 +138,9 @@ class config(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
+        else:
+            logerror(ctx, error)
+            await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -146,6 +165,9 @@ class config(commands.Cog):
             await ctx.send("You do not have permission to perform that command.")
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
+        else:
+            logerror(ctx, error)
+            await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
     async def help(self, ctx):

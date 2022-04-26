@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import time
 
-from functions import api_call,updated,connector,get_cogs
+from functions import api_call,updated,connector,get_cogs,logerror
 
 load_dotenv()
 
@@ -60,6 +60,10 @@ class nsinfo(commands.Cog):
     async def nation_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -105,6 +109,10 @@ class nsinfo(commands.Cog):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -154,6 +162,10 @@ class nsinfo(commands.Cog):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -180,6 +192,10 @@ class nsinfo(commands.Cog):
     async def s1_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -206,6 +222,10 @@ class nsinfo(commands.Cog):
     async def s2_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -240,6 +260,10 @@ class nsinfo(commands.Cog):
     async def region_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a region.")
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -292,6 +316,10 @@ class nsinfo(commands.Cog):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.") 
+        elif isinstance(error, commands.CheckFailure):
+            return
+        else:
+            logerror(ctx, error)
 
 def setup(bot):
     bot.add_cog(nsinfo(bot))
