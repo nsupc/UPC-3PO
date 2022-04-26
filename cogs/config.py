@@ -154,6 +154,7 @@ class config(commands.Cog):
 
         embed = discord.Embed(title="Config", colour=color)
         embed.add_field(name="changeprefix",value="Changes the bot's server command prefix.\nUsage: !changeprefix [prefix]", inline=False)
+        embed.add_field(name="welcome",value="Designates a welcome channel and sets the server welcome message.", inline=False)
         embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
         embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
         embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
