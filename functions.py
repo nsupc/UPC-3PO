@@ -3,6 +3,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import mysql.connector
+import time
 
 load_dotenv()
 USER = os.getenv("AGENT")
@@ -55,3 +56,8 @@ def connector():
         database=os.getenv("database")
     )
     return mydb
+
+def logerror(ctx, error):
+    f = open("error.txt", "a")
+    f.write(f"{int(time.time())}: {type(error)} occured from command invocation {ctx.message.content}\n")
+    f.close()
