@@ -71,20 +71,25 @@ class verification(commands.Cog):
         mycursor.execute(f"SELECT * FROM reg WHERE userid = '{member.id}' AND serverid = '{ctx.guild.id}' AND verified = 1")
         myresult = mycursor.fetchall()
 
-        color = int("2d0001", 16)
-
-        embed=discord.Embed(title=f"Verified identities of {member.name}", color=color)
-        embed.add_field(name="User", value=f"<@{member.id}>")
-        for x in myresult:
-            embed.add_field(name="Nation", value=f"https://www.nationstates.net/nation={x[3]}", inline=False)
-        await ctx.send(embed=embed)
-
+        if myresult:
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=f"Verified identities of {member.name}", color=color)
+            embed.add_field(name="User:", value=f"<@!{member.id}>")
+            for x in myresult:
+                embed.add_field(name="Nation", value=f"https://www.nationstates.net/nation={x[3]}", inline=False)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"{member.name} has no verified nations in this server.")
+        
     @id.error
     async def id_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
+        else:
+            print(error)
+            print(type(error))
 
 def setup(bot):
     bot.add_cog(verification(bot))
