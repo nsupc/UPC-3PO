@@ -3,7 +3,6 @@ from discord.ext import commands
 
 from functions import connector,get_log,get_cogs
 
-
 class config(commands.Cog):
 
     def __init__(self, bot):
