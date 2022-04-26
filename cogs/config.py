@@ -40,10 +40,6 @@ class config(commands.Cog):
         await ctx.send(f'Ping: {round(self.bot.latency * 1000)} ms')
 
     @commands.command()
-    async def name(self, ctx):
-        await ctx.send(f'name: {ctx.guild.name}')
-
-    @commands.command()
     @commands.has_permissions(administrator=True)
     async def changeprefix(self, ctx, *, prefix):
         mydb = connector()
@@ -179,7 +175,7 @@ class config(commands.Cog):
         if "v" in c:
             embed = discord.Embed(title="Verification", colour=color)
             embed.add_field(name="verify",value="Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: !verify [nation]", inline=False)
-            embed.add_field(name="id",value="Displays NationStates nations associated with a particular Discord user.\nUsage: !id [Discord ID]", inline=False)
+            embed.add_field(name="id",value="Displays NationStates nations associated with a particular Discord user.\nUsage: !id [user]", inline=False)
             await ctx.send(embed=embed)
 
         if "a" in c:
