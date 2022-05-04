@@ -304,7 +304,7 @@ class nsinfo(commands.Cog):
         plt.clf()
 
         color = int("2d0001", 16)
-        embed=discord.Embed(title=f'{region} Activity Graph', description=f'Last daily dump pulled {updated()}', color=color)
+        embed=discord.Embed(title=f'{region} Activity Graph', color=color)
         file = discord.File(path, filename=path)
         embed.set_image(url=f"attachment://{path}")
         await ctx.send(file= file, embed=embed)
