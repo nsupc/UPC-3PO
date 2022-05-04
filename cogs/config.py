@@ -16,7 +16,7 @@ class config(commands.Cog):
         mycursor.execute(f"SELECT welcomechannel, welcome FROM guild WHERE serverid = '{member.guild.id}' LIMIT 1")
         x = mycursor.fetchone()
         welcome = self.bot.get_channel(int(x[0]))
-        await welcome.send(f"{member.mention}{x[1]}")
+        await welcome.send(f"{x[1].replace('<user>', member.mention)}")
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -92,7 +92,7 @@ class config(commands.Cog):
                 mydb = connector()
                 mycursor = mydb.cursor()
                 mycursor.execute(f'UPDATE guild SET welcomechannel = "{wid.content}" WHERE serverid = "{ctx.guild.id}"')
-                await ctx.send("What would you like the welcome message to be? 500 characters max.\nPS: I will prepend your message by pinging the new user, so you should set your message to begin with something like ', welcome...'")
+                await ctx.send("What would you like the welcome message to be? 500 characters max.\nUse ``<user>`` in your message where you would like me to ping new members.")
                 wcontent = await self.bot.wait_for('message', timeout=60.0, check=check)
                 try:
                     mycursor.execute(f"UPDATE guild SET welcome = '{wcontent.content}' WHERE serverid = '{ctx.guild.id}'")
