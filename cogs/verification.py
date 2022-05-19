@@ -27,7 +27,7 @@ class verification(commands.Cog):
         mydb = connector()
         nat = nation.lower().replace(" ", "_")
         try:
-            if(bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=name').text, 'xml').NAME.text):
+            if(bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=name').text, 'xml').NAME.text):
                 try:
                     channel = await ctx.author.create_dm()
                     def check(m):
@@ -46,7 +46,7 @@ class verification(commands.Cog):
                             mycursor.execute("SELECT * FROM reg WHERE userid = '{}' AND serverid = '{}' ORDER BY timestamp ASC LIMIT 1".format(ctx.author.id, ctx.guild.id))
                             data = mycursor.fetchone()
 
-                            r = api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?a=verify&nation={nat}&checksum={code}').text
+                            r = api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?a=verify&nation={nat}&checksum={code}').text
 
                             if int(r) == 1:
                                 mycursor.execute("UPDATE reg SET verified = 1 WHERE id = {}".format(data[0])) 
