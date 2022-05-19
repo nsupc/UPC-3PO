@@ -150,12 +150,12 @@ class balder(commands.Cog):
         data = read.readlines()
         read.close()
         for x in data:
-            watchers.append(x.strip("\n"))
+            watchers.append(f'[nation]{x.strip("\n")}[/nation]')
 
         if len(watchers) > 1:
             ping = ", ".join(watchers[:-1]) + ', and ' + watchers[-1]
         else:
-            ping = watchers[0]
+            ping = watchers[0] 
 
         data = {
             'nation': 'The Balder World Assembly Office',
