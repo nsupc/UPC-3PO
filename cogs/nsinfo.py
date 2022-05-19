@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import os
 import time
 
-from functions import api_call,updated,connector,get_cogs,logerror
+from functions import api_call,connector,get_cogs,logerror
 
 load_dotenv()
 
@@ -40,7 +40,7 @@ class nsinfo(commands.Cog):
     async def nation(self, ctx, *, msg):
         try:
             nat = msg.lower().replace(" ","_")
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}').text, 'xml')
             region = r.REGION.text.lower().replace(" ","_")
 
             color = int("2d0001", 16)
@@ -75,7 +75,7 @@ class nsinfo(commands.Cog):
         path = nat + "_endotart.html"
 
         try:
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region').text, 'xml').REGION.text
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region').text, 'xml').REGION.text
         except:
             await ctx.send(f"Uh oh, I can't find the nation {nation}.")
             return
@@ -126,7 +126,7 @@ class nsinfo(commands.Cog):
         nne = []
 
         try:
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=endorsements+region').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=endorsements+region').text, 'xml')
         except:
             await ctx.send(f"Uh oh, I can't find the nation {nation}.")
             return
@@ -176,7 +176,7 @@ class nsinfo(commands.Cog):
         mycursor.execute(f'SELECT dbid FROM s1 WHERE name = "{nation}"')
         try:
             dbid = str(mycursor.fetchone()[0])
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=1').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=1').text, 'xml')
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=1", description=f'"{r.SLOGAN.text}"', color=color)
@@ -206,7 +206,7 @@ class nsinfo(commands.Cog):
         mycursor.execute(f'SELECT dbid FROM s2 WHERE name = "{nation}"')
         try:
             dbid = str(mycursor.fetchone()[0])
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=2').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=2').text, 'xml')
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=2", description=f'"{r.SLOGAN.text}"', color=color)
@@ -232,19 +232,19 @@ class nsinfo(commands.Cog):
     async def region(self, ctx, *, region):
         try:
             reg = region.lower().replace(" ","_")
-            r = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?region={reg}&q=name+power+numnations+delegate+delegatevotes+flag+founder').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?region={reg}&q=name+power+numnations+delegate+delegatevotes+flag+founder').text, 'xml')
 
             color = int("2d0001", 16)
 
             embed=discord.Embed(title=r.NAME.text, url=f"https://nationstates.net/region={reg}", color=color)
             embed.set_thumbnail(url=r.FLAG.text)
             if r.FOUNDER.text != "0":
-                fr = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
+                fr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
                 embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
             else:
                 embed.add_field(name="Founder", value="None", inline=True)
             if r.DELEGATE.text != "0":
-                dr = bs(api_call(f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.DELEGATE.text}&q=name').text, 'xml')
+                dr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.DELEGATE.text}&q=name').text, 'xml')
                 embed.add_field(name="Delegate", value=f"[{dr.NAME.text}](https://nationstates.net/nation={r.DELEGATE.text})", inline=True)
             else:
                 embed.add_field(name="Delegate", value="None", inline=True)
@@ -318,6 +318,48 @@ class nsinfo(commands.Cog):
             await ctx.send("Please select a nation.") 
         elif isinstance(error, commands.CheckFailure):
             return
+        else:
+            logerror(ctx, error)
+
+    @commands.command()
+    @isLoaded()
+    async def ga(self, ctx):
+        r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=resolution").text, 'xml')
+        ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
+
+        color = int("2d0001", 16)
+        embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=ga", description='by {}'.format(ar.NAME.text), color=color)
+        embed.set_thumbnail(url="https://www.nationstates.net/images/ga.jpg")
+        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+
+        await ctx.send(embed=embed)
+
+    @ga.error
+    async def ga_error(self, ctx, error):
+        if isinstance(error, commands.CommandInvokeError):
+            await ctx.send("There is no General Assembly Resolution currently at vote.")
+        else:
+            logerror(ctx, error)
+
+    @commands.command()
+    @isLoaded()
+    async def sc(self, ctx):
+        r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=2&q=resolution").text, 'xml')
+        ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
+
+        color = int("2d0001", 16)
+        embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=sc", description='by {}'.format(ar.NAME.text), color=color)
+        embed.set_thumbnail(url="https://www.nationstates.net/images/sc.jpg")
+        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+
+        await ctx.send(embed=embed)
+
+    @sc.error
+    async def sc_error(self, ctx, error):
+        if isinstance(error, commands.CommandInvokeError):
+            await ctx.send("There is no Security Council Resolution currently at vote.")
         else:
             logerror(ctx, error)
 
