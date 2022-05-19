@@ -6,23 +6,22 @@ import mysql.connector
 import time
 
 load_dotenv()
-USER = os.getenv("AGENT")
 
 @sleep_and_retry
 @limits(calls=45, period=30)
-def api_call(url):
-    headers = {"User-Agent": USER}
-    r = requests.get(url, headers=headers, allow_redirects=True)
+def api_call(mode, url, data=None, pin=None):
+    #Mode 1 is for get requests
+    if(mode == 1):
+        headers = {"User-Agent": os.getenv("agent"), "X-Password": os.getenv("pass")}
+        r = requests.get(url, headers=headers, allow_redirects=True)
+    #Mode 2 is for post requests
+    elif(mode == 2):
+        headers = {"User-Agent": os.getenv("agent"), "X-Password": os.getenv("pass"), "X-Pin": pin}
+        r = requests.post(url, headers=headers, data=data)
 
     if r.status_code != 200:
         raise Exception(f'API Response: {r.status_code}')
     return r
-
-def updated():
-    r = open("update.txt", "r")
-    num = r.read()
-    r.close()
-    return "<t:{}:R>".format(num)
 
 def get_prefix(bot, msg):
     if msg.guild is None:
