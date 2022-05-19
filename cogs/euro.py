@@ -57,15 +57,17 @@ class euro(commands.Cog):
                     embed.add_field(name=f'SC: "{proposal.NAME.text.title()}" by {proposal.PROPOSED_BY.text.title()}', value=f"[https://www.nationstates.net/page=UN_view_proposal/id={proposal.ID.text}](https://www.nationstates.net/page=UN_view_proposal/id={proposal.ID.text})", inline=False)
 
         embed.add_field(name="Discussion Template", value="[https://forums.europeians.com/index.php?threads/discussion-thread-and-analysis-templates.10055306/](https://forums.europeians.com/index.php?threads/discussion-thread-and-analysis-templates.10055306/)", inline=False)
-        
-        #Writes the new set of proposals with >30 approvals for the next check
+
+        #Pings if there are new proposals reaching quorum
         if(len(new) > 0):
-            write = open("proposals.txt", "w")
-            for x in ids:
-                write.write(f'{x}\n')
-            write.close()
             channel = self.bot.get_channel(839999474739052576)
             await channel.send("<@!230778695713947648>, the resolution(s) below are approaching quorum. If there isn't already a discussion thread for any of these resolutions, feel free to start one!", embed=embed)
+
+        #Writes the new set of proposals with >30 approvals for the next check
+        write = open("proposals.txt", "w")
+        for x in ids:
+            write.write(f'{x}\n')
+        write.close()
 
     #Commands
     @commands.command()
