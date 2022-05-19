@@ -14,7 +14,7 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents)
 bot.remove_command("help")
 
 #Cogs
-default_cogs = ['nsinfo','verification','admin','config']
+default_cogs = ['nsinfo','verification','admin','config','euro','swag','balder']
 for x in default_cogs:
     bot.load_extension(f"cogs.{x}")
 
@@ -59,8 +59,7 @@ async def unload_error(ctx, error):
 @bot.command()
 @isUPC()
 async def reload(ctx, extension):
-    bot.unload_extension(f'cogs.{extension.lower()}')
-    bot.load_extension(f'cogs.{extension.lower()}')
+    bot.reload_extension(f'cogs.{extension.lower()}')
     await ctx.send(f"Extension {extension.lower()} has been reloaded.")
 
 @reload.error
