@@ -16,6 +16,7 @@ class admin(commands.Cog):
             return "a" in r
         return commands.check(predicate)
 
+
     #Commands
     @commands.command()
     @isLoaded()
