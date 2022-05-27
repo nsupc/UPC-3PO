@@ -150,7 +150,8 @@ class balder(commands.Cog):
         data = read.readlines()
         read.close()
         for x in data:
-            watchers.append(f'[nation]{x.strip("\n")}[/nation]')
+            y = x.strip("\n")
+            watchers.append(f'[nation]{y}[/nation]')
 
         if len(watchers) > 1:
             ping = ", ".join(watchers[:-1]) + ', and ' + watchers[-1]
