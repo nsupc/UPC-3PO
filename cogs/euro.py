@@ -12,8 +12,8 @@ class euro(commands.Cog):
     #Checks
     def isLoaded():
         async def predicate(ctx):
-            r = ["839999474184618024", "129372441083379712"]
-            id = str(ctx.guild.id)
+            r = ["917491744109649975", "500112182231564338"]
+            id = str(ctx.channel.id)
             return id in r
         return commands.check(predicate)
 
