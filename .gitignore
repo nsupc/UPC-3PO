@@ -8,3 +8,6 @@ limit.py
 cogs/example.py
 .DS_Store
 error.txt
+ids.txt
+notifications.txt
+req.txt
