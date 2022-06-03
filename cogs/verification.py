@@ -43,7 +43,7 @@ class verification(commands.Cog):
                         msg = await self.bot.wait_for('message', timeout=60.0, check=check)
                         code = str(msg.content)
                         try:
-                            mycursor.execute("SELECT * FROM reg WHERE userid = '{}' AND serverid = '{}' ORDER BY timestamp ASC LIMIT 1".format(ctx.author.id, ctx.guild.id))
+                            mycursor.execute("SELECT * FROM reg WHERE userid = '{}' AND serverid = '{}' AND nation = '{}' AND verified = '0' ORDER BY timestamp ASC LIMIT 1".format(ctx.author.id, ctx.guild.id, nat))
                             data = mycursor.fetchone()
 
                             r = api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?a=verify&nation={nat}&checksum={code}').text
