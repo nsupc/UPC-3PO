@@ -239,8 +239,11 @@ class nsinfo(commands.Cog):
             embed=discord.Embed(title=r.NAME.text, url=f"https://nationstates.net/region={reg}", color=color)
             embed.set_thumbnail(url=r.FLAG.text)
             if r.FOUNDER.text != "0":
-                fr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
-                embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
+                try:
+                    fr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
+                    embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
+                except:
+                    embed.add_field(name="Founder (CTE)", value=f"[{r.FOUNDER.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
             else:
                 embed.add_field(name="Founder", value="None", inline=True)
             if r.DELEGATE.text != "0":
@@ -282,7 +285,8 @@ class nsinfo(commands.Cog):
 
         Dict = {}
         today = date.today()
-        path = region + "_activity.jpg"
+        fregion = region.replace(" ", "_").lower()
+        path = fregion + "_activity.jpg"
 
         for x in myresult:
             days = (today - datetime.date.fromtimestamp(int(x[0]))).days
