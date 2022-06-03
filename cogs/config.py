@@ -94,7 +94,7 @@ class config(commands.Cog):
     async def changeprefix_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a new bot prefix.")
         else:
             logerror(ctx, error)
@@ -114,7 +114,7 @@ class config(commands.Cog):
     async def log_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a channel.")
         else:
             logerror(ctx, error)
@@ -151,7 +151,7 @@ class config(commands.Cog):
     async def welcome_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a channel.")
         else:
             logerror(ctx, error)
@@ -178,7 +178,7 @@ class config(commands.Cog):
     async def addcog_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
         else:
             logerror(ctx, error)
@@ -205,7 +205,7 @@ class config(commands.Cog):
     async def remcog_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
-        if isinstance(error, commands.MissingRequiredArgument):
+        elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
         else:
             logerror(ctx, error)
