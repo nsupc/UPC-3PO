@@ -50,7 +50,11 @@ class nsinfo(commands.Cog):
             embed.add_field(name="World Assembly Status", value=r.UNSTATUS.text, inline=True)
             embed.add_field(name="Influence", value=r.INFLUENCE.text, inline=True)
             embed.add_field(name="Population", value=self.millify(r.POPULATION.text), inline=True)
-            embed.add_field(name="Founded", value=datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)), inline=True)
+            fdate = str(datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)))
+            if fdate == '1970-01-01':
+                embed.add_field(name="Founded", value="Antiquity", inline=True)
+            else:
+                embed.add_field(name="Founded", value=fdate, inline=True)
             embed.add_field(name="Most Recent Activity", value=f'<t:{int(r.LASTLOGIN.text)}:R>', inline=True)
             await ctx.send(embed=embed)
         except:
