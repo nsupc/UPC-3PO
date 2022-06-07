@@ -62,10 +62,10 @@ class nsinfo(commands.Cog):
 
     @nation.error
     async def nation_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
 
@@ -109,12 +109,12 @@ class nsinfo(commands.Cog):
 
     @endotart.error
     async def endotart_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
 
@@ -162,12 +162,12 @@ class nsinfo(commands.Cog):
 
     @nne.error
     async def nne_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
 
@@ -194,10 +194,10 @@ class nsinfo(commands.Cog):
 
     @s1.error
     async def s1_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
 
@@ -224,10 +224,10 @@ class nsinfo(commands.Cog):
 
     @s2.error
     async def s2_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
 
@@ -265,10 +265,10 @@ class nsinfo(commands.Cog):
 
     @region.error
     async def region_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a region.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a region.")
         else:
             logerror(ctx, error)
 
@@ -320,12 +320,12 @@ class nsinfo(commands.Cog):
 
     @activity.error
     async def activity_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.") 
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
 
@@ -345,7 +345,9 @@ class nsinfo(commands.Cog):
 
     @ga.error
     async def ga_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.CommandInvokeError):
             await ctx.send("There is no General Assembly Resolution currently at vote.")
         else:
             logerror(ctx, error)
@@ -366,7 +368,9 @@ class nsinfo(commands.Cog):
 
     @sc.error
     async def sc_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.CommandInvokeError):
             await ctx.send("There is no Security Council Resolution currently at vote.")
         else:
             logerror(ctx, error)
