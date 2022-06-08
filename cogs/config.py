@@ -235,6 +235,7 @@ class config(commands.Cog):
             embed.add_field(name="s2",value="Displays information about the Season 2 Trading Card of a nation.\nUsage: !s2 [nation]", inline=False)
             embed.add_field(name="region",value="Displays information about a NationStates region.\nUsage: !region [region]", inline=False)
             embed.add_field(name="activity",value="Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: !activity [region]", inline=False)
+            embed.add_field(name="resolution",value="Displays information about a previous World Assembly resolution.\nUsage: !resolution [GA/SC][resolution number]", inline=False)
             embed.add_field(name="ga",value="Displays information about the at vote General Assembly resolution.", inline=False)
             embed.add_field(name="sc",value="Displays information about the at vote Security Council resolution.", inline=False)
             await ctx.send(embed=embed)

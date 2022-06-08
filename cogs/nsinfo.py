@@ -331,6 +331,28 @@ class nsinfo(commands.Cog):
 
     @commands.command()
     @isLoaded()
+    async def resolution(self, ctx, resolution):
+        prefix = resolution[:2].lower()
+        if prefix == "ga":
+            council = 1
+        elif prefix == "sc":
+            council = 2
+        else:
+            await ctx.send("Please specify whether you are looking for information about a GA or SC resolution.")
+            return
+
+        r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa={council}&id={resolution[2:]}&q=resolution").text, 'xml')
+
+        color = int("2d0001", 16)
+        embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+        embed.set_thumbnail(url=f"https://www.nationstates.net/images/{prefix}.jpg")
+        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @isLoaded()
     async def ga(self, ctx):
         r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=resolution").text, 'xml')
         ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
