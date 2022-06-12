@@ -50,18 +50,26 @@ class nsinfo(commands.Cog):
             embed.add_field(name="World Assembly Status", value=r.UNSTATUS.text, inline=True)
             embed.add_field(name="Influence", value=r.INFLUENCE.text, inline=True)
             embed.add_field(name="Population", value=self.millify(r.POPULATION.text), inline=True)
-            embed.add_field(name="Founded", value=datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)), inline=True)
+            fdate = str(datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)))
+            if fdate == '1970-01-01':
+                embed.add_field(name="Founded", value="Antiquity", inline=True)
+            else:
+                embed.add_field(name="Founded", value=fdate, inline=True)
             embed.add_field(name="Most Recent Activity", value=f'<t:{int(r.LASTLOGIN.text)}:R>', inline=True)
             await ctx.send(embed=embed)
         except:
-            await ctx.send("Invalid nation, please try again.")
+            color = int("2d0001", 16)
+            file = discord.File("./media/exnation.png", filename="image.png")
+            embed=discord.Embed(title=msg, url=f"https://www.nationstates.net/page=boneyard?nation={nat}", description=f"'If an item does not appear in our records, it does not exist.'\n-Jocasta Nu\nPerhaps the nation you're looking for is in the Boneyard?", color=color)
+            embed.set_thumbnail(url="attachment://image.png")
+            await ctx.send(file=file, embed=embed)
 
     @nation.error
     async def nation_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
 
@@ -105,12 +113,12 @@ class nsinfo(commands.Cog):
 
     @endotart.error
     async def endotart_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
 
@@ -158,12 +166,12 @@ class nsinfo(commands.Cog):
 
     @nne.error
     async def nne_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
 
@@ -190,10 +198,10 @@ class nsinfo(commands.Cog):
 
     @s1.error
     async def s1_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
 
@@ -220,12 +228,44 @@ class nsinfo(commands.Cog):
 
     @s2.error
     async def s2_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
+
+    @commands.command()
+    @isLoaded()
+    async def deck(self, ctx, *, nation):
+        nat = nation.lower().replace(" ","_")
+
+        if str(nation) == "9003":
+            await ctx.send("No.")
+            return
+
+        try:
+            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}").text, 'xml')
+            cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
+
+            for card in r.find_all("CARD"):
+                cdict[card.CATEGORY.text] += 1
+
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=f"{nation}'s Deck", url = f"https://www.nationstates.net/page=deck/nation={nat}", color=color)
+            embed.add_field(name="Deck Value", value=f"{r.DECK_VALUE.text}", inline=True)
+            embed.add_field(name="Bank", value=f"{r.BANK.text}", inline=True)
+            embed.add_field(name="Legendaries", value=f"{cdict['legendary']}", inline=True)
+            embed.add_field(name="Epics", value=f"{cdict['epic']}", inline=True)
+            embed.add_field(name="Ultra-Rares", value=f"{cdict['ultra-rare']}", inline=True)
+            embed.add_field(name="Rares", value=f"{cdict['rare']}", inline=True)
+            embed.add_field(name="Uncommons", value=f"{cdict['uncommon']}", inline=True)
+            embed.add_field(name="Commons", value=f"{cdict['common']}", inline=True)
+        except:
+            await ctx.send("Sorry, I can't find that nation.")
+            return
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     @isLoaded()
@@ -239,8 +279,11 @@ class nsinfo(commands.Cog):
             embed=discord.Embed(title=r.NAME.text, url=f"https://nationstates.net/region={reg}", color=color)
             embed.set_thumbnail(url=r.FLAG.text)
             if r.FOUNDER.text != "0":
-                fr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
-                embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
+                try:
+                    fr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
+                    embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
+                except:
+                    embed.add_field(name="Founder (CTE)", value=f"[{r.FOUNDER.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
             else:
                 embed.add_field(name="Founder", value="None", inline=True)
             if r.DELEGATE.text != "0":
@@ -258,10 +301,10 @@ class nsinfo(commands.Cog):
 
     @region.error
     async def region_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a region.")
-        elif isinstance(error, commands.CheckFailure):
+        if "n" not in get_cogs(ctx.guild.id):
             return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a region.")
         else:
             logerror(ctx, error)
 
@@ -282,7 +325,8 @@ class nsinfo(commands.Cog):
 
         Dict = {}
         today = date.today()
-        path = region + "_activity.jpg"
+        fregion = region.replace(" ", "_").lower()
+        path = fregion + "_activity.jpg"
 
         for x in myresult:
             days = (today - datetime.date.fromtimestamp(int(x[0]))).days
@@ -312,14 +356,39 @@ class nsinfo(commands.Cog):
 
     @activity.error
     async def activity_error(self, ctx, error):
-        if isinstance(error, commands.BotMissingPermissions):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.BotMissingPermissions):
             await ctx.send("Sorry, I don't have permission to upload files in this server.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.") 
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
+
+    @commands.command()
+    @isLoaded()
+    async def resolution(self, ctx, resolution):
+        prefix = resolution[:2].lower()
+        if prefix == "ga":
+            council = 1
+        elif prefix == "sc":
+            council = 2
+        else:
+            await ctx.send("Please specify whether you are looking for information about a GA or SC resolution.")
+            return
+
+        r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa={council}&id={resolution[2:]}&q=resolution").text, 'xml')
+
+        color = int("2d0001", 16)
+        if not r.REPEALED.text:
+            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+        else:
+            embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+        embed.set_thumbnail(url=f"https://www.nationstates.net/images/{prefix}.jpg")
+        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+
+        await ctx.send(embed=embed)
 
     @commands.command()
     @isLoaded()
@@ -337,7 +406,9 @@ class nsinfo(commands.Cog):
 
     @ga.error
     async def ga_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.CommandInvokeError):
             await ctx.send("There is no General Assembly Resolution currently at vote.")
         else:
             logerror(ctx, error)
@@ -358,7 +429,9 @@ class nsinfo(commands.Cog):
 
     @sc.error
     async def sc_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.CommandInvokeError):
             await ctx.send("There is no Security Council Resolution currently at vote.")
         else:
             logerror(ctx, error)
