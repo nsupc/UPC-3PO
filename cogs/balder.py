@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as bs
 from datetime import date
 import discord
 from discord.ext import commands,tasks
+import time
 
 from functions import api_call,logerror
 
@@ -12,8 +13,8 @@ class balder(commands.Cog):
     #Checks
     def isLoaded():
         async def predicate(ctx):
-            r = ["839999474184618024", "221673864843886593"]
-            id = str(ctx.guild.id)
+            r = ["917491744109649975", "615577947612381458"]
+            id = str(ctx.channel.id)
             return id in r
         return commands.check(predicate)
 
@@ -21,26 +22,88 @@ class balder(commands.Cog):
     @tasks.loop(hours=1)
     @isLoaded()
     async def check_notifications(self):
+        channel = self.bot.get_channel(917491744109649975)
+
+        await channel.send(f"Running: {time.time()}")
+
         watchers = []
+        ids = []
+        new = []
 
         read = open("notifications.txt", "r")
         data = read.readlines()
         read.close()
         for x in data:
-            watchers.append(x.strip("\n"))
+            y = x.strip("\n")
+            watchers.append(y)
 
-        r = bs(api_call(1, 'https://www.nationstates.net/cgi-bin/api.cgi?nation=the_balder_world_assembly_office&q=notices').text, 'xml')
+        read = open("ids.txt", "r")
+        data = read.readlines()
+        read.close()
+        for x in data:
+            y = x.strip("\n")
+            ids.append(y)
+
+        await channel.send(f"IDS: {ids}")
+
+        r = api_call(3, 'https://www.nationstates.net/cgi-bin/api.cgi?nation=the_balder_world_assembly_office&q=notices')
+        pin = r.headers["X-pin"]
+
+        r = bs(r.text, "xml")
         
         for notice in reversed(r.find_all("NOTICE")):
-            if notice.TYPE.text == "RMB":
-                msg = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?region={notice.URL.text.replace("region=","").split("/",1)[0]}&q=messages;fromid={notice.URL.text.split("?postid=",1)[1].split("#",1)[0]};limit=1').text, 'xml')
+            pid = notice.URL.text.split("postid=")[1].split("#")[0]
+            if notice.TYPE.text == "RMB" and pid not in ids:
+                await channel.send(pid)
+                ids.append(pid)
 
-                content = msg.MESSAGE.text.replace("[nation]The Balder World Assembly Office[/nation]","").replace(" ","").lower()
+                post = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?region={notice.URL.text.split("=")[1].split("/")[0]}&q=messages&limit=1&fromid={pid}').text, 'xml')
 
-                if((content == "in") & (msg.NATION.text not in watchers)):
-                    watchers.append(msg.NATION.text)
-                elif((content == "out") & (msg.NATION.text in watchers)):
-                    watchers.remove(msg.NATION.text)
+                if "in" in post.MESSAGE.text and post.NATION.text not in watchers:
+                    watchers.append(post.NATION.text)
+                    new.append(f'[nation]{post.NATION.text}[/nation]')
+                elif "out" in post.MESSAGE.text and post.NATION.text in watchers:
+                    watchers.remove(post.NATION.text)
+        
+        await channel.send(f"Watchers: {watchers}")
+        await channel.send(f"New: {new}")
+
+        if new:
+            message = "The following nations have been added to our World Assembly Recommendation notifications:\n\n{}"
+
+            if len(new) > 1:
+                ping = ", ".join(new[:-1]) + ', and ' + new[-1]
+            else:
+                ping = new[0] 
+
+            data = {
+                'nation': 'The Balder World Assembly Office',
+                'region': 'Balder',
+                'c': 'rmbpost',
+                'text': message.format(ping),
+                'mode': 'prepare'
+            }
+
+            p = api_call(2, "https://www.nationstates.net/cgi-bin/api.cgi", data, pin)
+
+            bsp = bs(p.text, 'xml')
+            token = bsp.find_all("SUCCESS")
+
+            data = {
+                'nation': 'The Balder World Assembly Office',
+                'region': 'Balder',
+                'c': 'rmbpost',
+                'text': message.format(ping),
+                'mode': 'execute',
+                'token': token
+            }
+
+            api_call(2, "https://www.nationstates.net/cgi-bin/api.cgi", data, pin)
+
+        write = open("ids.txt", "w")
+        for x in ids:
+            write.write(f'{x}\n')
+        write.close()
 
         write = open("notifications.txt", "w")
         for x in watchers:
@@ -56,13 +119,14 @@ class balder(commands.Cog):
     
     @balstart.error
     async def balstart_error(self, ctx, error):
+        print(error)
         if isinstance(error, commands.CommandInvokeError):
             await ctx.send("Task already started.")
 
     @commands.command()
     @isLoaded()
     async def balstop(self, ctx):
-        self.check_notifications.stop()
+        self.check_notifications.cancel()
         await ctx.send("Stopped.")   
 
     @commands.command()
@@ -111,7 +175,6 @@ class balder(commands.Cog):
         #Prepare API call
         p = api_call(2, "https://www.nationstates.net/cgi-bin/api.cgi", data)
 
-        print(p.headers)
         pin = p.headers["X-Pin"]
         bsp = bs(p.text, 'xml')
         token = bsp.find_all("SUCCESS")
@@ -150,7 +213,8 @@ class balder(commands.Cog):
         data = read.readlines()
         read.close()
         for x in data:
-            watchers.append(f'[nation]{x.strip("\n")}[/nation]')
+            y = x.strip("\n")
+            watchers.append(f'[nation]{y}[/nation]')
 
         if len(watchers) > 1:
             ping = ", ".join(watchers[:-1]) + ', and ' + watchers[-1]
@@ -167,7 +231,6 @@ class balder(commands.Cog):
 
         p = api_call(2, "https://www.nationstates.net/cgi-bin/api.cgi", data)
 
-        print(p.headers)
         pin = p.headers["X-Pin"]
         bsp = bs(p.text, 'xml')
         token = bsp.find_all("SUCCESS")
