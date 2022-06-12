@@ -12,14 +12,23 @@ load_dotenv()
 def api_call(mode, url, data=None, pin=None):
     #Mode 1 is for get requests
     if(mode == 1):
-        headers = {"User-Agent": os.getenv("agent"), "X-Password": os.getenv("pass")}
+        headers = {"User-Agent": os.getenv("agent")}
         r = requests.get(url, headers=headers, allow_redirects=True)
     #Mode 2 is for post requests
     elif(mode == 2):
         headers = {"User-Agent": os.getenv("agent"), "X-Password": os.getenv("pass"), "X-Pin": pin}
         r = requests.post(url, headers=headers, data=data)
+    elif(mode == 3):
+        headers = {"User-Agent": os.getenv("agent"), "X-Password": os.getenv("pass")}
+        r = requests.get(url, headers=headers)
+
+    f = open("req.txt", "a")
+    f.write(f"{int(time.time())}: {url}\n")
+    f.close()
 
     if r.status_code != 200:
+        print(r)
+        print(r.headers)
         raise Exception(f'API Response: {r.status_code}')
     return r
 

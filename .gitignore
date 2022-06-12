@@ -7,3 +7,8 @@ limit.py
 *.pyc
 cogs/example.py
 .DS_Store
+error.txt
+req.txt
+notifications.txt
+ids.txt
+notifications.txt
