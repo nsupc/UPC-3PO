@@ -233,6 +233,7 @@ class config(commands.Cog):
             embed.add_field(name="nne",value="Outputs an HTML sheet containing links to every nation in a region not endorsing a nation, as listed in the region's Daily Dump.\nUsage: !nne [nation]", inline=False)
             embed.add_field(name="s1",value="Displays information about the Season 1 Trading Card of a nation.\nUsage: !s1 [nation]", inline=False)
             embed.add_field(name="s2",value="Displays information about the Season 2 Trading Card of a nation.\nUsage: !s2 [nation]", inline=False)
+            embed.add_field(name="deck",value="Displays information about the deck of a nation.\nUsage: !deck [nation]", inline=False)
             embed.add_field(name="region",value="Displays information about a NationStates region.\nUsage: !region [region]", inline=False)
             embed.add_field(name="activity",value="Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: !activity [region]", inline=False)
             embed.add_field(name="resolution",value="Displays information about a previous World Assembly resolution.\nUsage: !resolution [GA/SC][resolution number]", inline=False)
@@ -261,7 +262,7 @@ class config(commands.Cog):
     @help.error
     async def help_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Which set of commands do you need help with? Config, NSInfo, Verification, or Admin")
+            await ctx.send("What do you need help with? Type !help followed by one of the following: config, nsinfo, verification, or admin")
 
 def setup(bot):
     bot.add_cog(config(bot))
