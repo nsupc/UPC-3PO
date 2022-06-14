@@ -240,32 +240,62 @@ class nsinfo(commands.Cog):
     async def deck(self, ctx, *, nation):
         nat = nation.lower().replace(" ","_")
 
-        if str(nation) == "9003":
-            await ctx.send("No.")
-            return
+        r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+info;nationname={nat}").text, 'xml')
 
-        try:
+        if int(r.NUM_CARDS.text) > 20000:
+            await ctx.send(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nation}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
+            return
+        else:
             r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}").text, 'xml')
             cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
+            sum = 0
+            values = []
+            labels = []
+            color = []
+            colors = ["#b69939", "#b49e68", "#9473a9", "#7b9ead", "#80ae82", "#a6a6a6"]
 
             for card in r.find_all("CARD"):
                 cdict[card.CATEGORY.text] += 1
+                sum += 1
 
+            path = nat + "_deck.jpg"
+
+            count = 0
+            for x in cdict:
+                print(cdict[x])
+                if cdict[x] != 0:
+                    labels.append(f"{x.title()} ({cdict[x]})")
+                    values.append(cdict[x])
+                    color.append(colors[count])
+                count += 1
+
+            plt.pie(values, labels = labels, colors = color)
+            plt.savefig(path)
+            plt.clf()
+
+            file = discord.File(path, filename=path)
             color = int("2d0001", 16)
-            embed=discord.Embed(title=f"{nation}'s Deck", url = f"https://www.nationstates.net/page=deck/nation={nat}", color=color)
+            embed=discord.Embed(title="{}'s Deck".format(nat.replace("_"," ").title()), url = f"https://www.nationstates.net/page=deck/nation={nat}", color=color)
             embed.add_field(name="Deck Value", value=f"{r.DECK_VALUE.text}", inline=True)
             embed.add_field(name="Bank", value=f"{r.BANK.text}", inline=True)
-            embed.add_field(name="Legendaries", value=f"{cdict['legendary']}", inline=True)
-            embed.add_field(name="Epics", value=f"{cdict['epic']}", inline=True)
-            embed.add_field(name="Ultra-Rares", value=f"{cdict['ultra-rare']}", inline=True)
-            embed.add_field(name="Rares", value=f"{cdict['rare']}", inline=True)
-            embed.add_field(name="Uncommons", value=f"{cdict['uncommon']}", inline=True)
-            embed.add_field(name="Commons", value=f"{cdict['common']}", inline=True)
-        except:
-            await ctx.send("Sorry, I can't find that nation.")
-            return
+            embed.add_field(name="Number of Cards", value = f"{sum}", inline=True)
+            embed.set_image(url=f"attachment://{path}")
 
-        await ctx.send(embed=embed)
+            await ctx.send(file=file, embed=embed)
+            os.remove(path)
+
+    @deck.error
+    async def deck_error(self, ctx, error):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
+        elif isinstance(error, commands.BotMissingPermissions):
+            await ctx.send("Sorry, I don't have permission to upload files in this server.")
+        elif isinstance(error, commands.CommandInvokeError):
+            await ctx.send("Sorry, I can't find that nation.")
+        else:
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
