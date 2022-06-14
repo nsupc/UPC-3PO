@@ -270,6 +270,7 @@ class nsinfo(commands.Cog):
                 count += 1
 
             plt.pie(values, labels = labels, colors = color)
+            plt.title(f'{nat.replace("_"," ").title()}\'s Deck')
             plt.savefig(path)
             plt.clf()
 
