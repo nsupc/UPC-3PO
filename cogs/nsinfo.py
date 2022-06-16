@@ -436,6 +436,15 @@ class nsinfo(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @resolution.error
+    async def resolution_error(self, ctx, error):
+        if "n" not in get_cogs(ctx.guild.id):
+            return
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a resolution.")
+        elif isinstance(error, commands.CommandInvokeError):
+            await ctx.send("I can't find that resolution.")
+
     @commands.command()
     @isLoaded()
     async def ga(self, ctx):
