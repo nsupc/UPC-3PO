@@ -300,6 +300,19 @@ class nsinfo(commands.Cog):
 
     @commands.command()
     @isLoaded()
+    async def market(self, ctx):
+        r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?q=cards+auctions;limit=1000").text, 'xml')
+
+        count = 0
+        for auction in r.find_all("AUCTION"):
+            count += 1
+        if count < 1000:
+            await ctx.send(f"There are currently {count} cards at auction.")
+        else:
+            await ctx.send(f"There are currently at least {count} cards at auction.")
+
+    @commands.command()
+    @isLoaded()
     async def region(self, ctx, *, region):
         try:
             reg = region.lower().replace(" ","_")
@@ -400,6 +413,7 @@ class nsinfo(commands.Cog):
     @isLoaded()
     async def resolution(self, ctx, resolution):
         prefix = resolution[:2].lower()
+        print(prefix)
         if prefix == "ga":
             council = 1
         elif prefix == "sc":
@@ -411,10 +425,11 @@ class nsinfo(commands.Cog):
         r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa={council}&id={resolution[2:]}&q=resolution").text, 'xml')
 
         color = int("2d0001", 16)
-        if not r.REPEALED.text:
-            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-        else:
+        try:
+            r.REPEALED.text
             embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+        except:
+            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
         embed.set_thumbnail(url=f"https://www.nationstates.net/images/{prefix}.jpg")
         embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
         embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
