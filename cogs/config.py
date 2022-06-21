@@ -44,6 +44,11 @@ class config(commands.Cog):
         await ctx.send(f'Ping: {round(self.bot.latency * 1000)} ms')
 
     @commands.command()
+    async def feedback(self, ctx):
+        user = await self.bot.fetch_user("230778695713947648")
+        await user.send(f"{ctx.message.author} said:\n'{ctx.message.content.strip('!feedback ')}'")
+
+    @commands.command()
     @commands.has_permissions(administrator=True)
     async def config(self, ctx):
         cogs = ['Config']
