@@ -44,9 +44,15 @@ class config(commands.Cog):
         await ctx.send(f'Ping: {round(self.bot.latency * 1000)} ms')
 
     @commands.command()
-    async def feedback(self, ctx):
+    async def feedback(self, ctx, *, msg):
         user = await self.bot.fetch_user("230778695713947648")
-        await user.send(f"{ctx.message.author} said:\n'{ctx.message.content.strip('!feedback ')}'")
+        await user.send(f"{ctx.message.author} said:\n'{msg}'")
+        await ctx.send("Your feedback has been recorded.")
+
+    @feedback.error
+    async def feedback_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please include your feedback.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -228,6 +234,7 @@ class config(commands.Cog):
             embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
             embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
             embed.add_field(name="help",value="Displays information about the commands that are loaded in this server.", inline=False)
+            embed.add_field(name="feedback",value="Sends upc feedback about the bot.", inline=False)
             embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
             await ctx.send(embed=embed)
 
