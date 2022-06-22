@@ -217,13 +217,36 @@ class nsinfo(commands.Cog):
         mycursor.execute(f'SELECT dbid FROM s2 WHERE name = "{nation}"')
         try:
             dbid = str(mycursor.fetchone()[0])
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=2').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=2').text, 'xml')
+
+            ask = 10000.00
+            bid = 0.00
+            asks = 0
+            bids = 0
+
+            for market in r.find_all("MARKET"):
+                if market.TYPE.text == "bid":
+                    bids += 1  
+                    if float(market.PRICE.text) > bid:
+                        bid = float(market.PRICE.text)
+                elif market.TYPE.text == "ask":
+                    asks += 1
+                    if float(market.PRICE.text) < ask:
+                        ask = float(market.PRICE.text)
+
+            if asks == 0:
+                ask = "None"
+            if bids == 0:
+                bid = "None"
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=2", description=f'"{r.SLOGAN.text}"', color=color)
             embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s2/{r.FLAG.text}")
             embed.add_field(name="Market Value", value=r.MARKET_VALUE.text, inline=True)
             embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
+            embed.add_field(name="Card ID", value=r.CARDID.text, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=ask, inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=bid, inline=True)
 
             await ctx.send(embed=embed)
         except:
