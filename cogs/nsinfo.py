@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 import math
 import matplotlib.pyplot as plt
 import os
-import time
 
 from functions import api_call,connector,get_cogs,logerror
 
@@ -49,6 +48,10 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Region", value=f"[{r.REGION.text}](https://nationstates.net/region={region})", inline=True)
             embed.add_field(name="World Assembly Status", value=r.UNSTATUS.text, inline=True)
             embed.add_field(name="Influence", value=r.INFLUENCE.text, inline=True)
+
+            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+            embed.add_field(name="Issues", value=r.ISSUES_ANSWERED.text, inline=True)
+
             embed.add_field(name="Population", value=self.millify(r.POPULATION.text), inline=True)
             fdate = str(datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)))
             if fdate == '1970-01-01':
@@ -304,12 +307,31 @@ class nsinfo(commands.Cog):
         r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?q=cards+auctions;limit=1000").text, 'xml')
 
         count = 0
+        cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
+        notables = []
         for auction in r.find_all("AUCTION"):
             count += 1
-        if count < 1000:
-            await ctx.send(f"There are currently {count} cards at auction.")
-        else:
-            await ctx.send(f"There are currently at least {count} cards at auction.")
+            cdict[auction.CATEGORY.text] += 1
+        
+        if count < 50:
+            notables.append(f"The auction is quiet, with only {count} cards being traded")
+        elif count < 200:
+            notables.append(f"The auction is rather busy, there are currently {count} cards available")
+        elif count < 500:
+            notables.append(f"The flood is here, there are {count} cards on the market")
+        elif count > 999:
+            notables.append("I can't even count how many cards are at auction, it's at least 1000")
+
+        if cdict["legendary"] <= 10 and cdict["legendary"] > 0:
+            notables.append("and there are a few legendaries for sale")
+        elif cdict["legendary"] > 10:
+            notables.append("and there are a number of legendaries for sale")
+        elif cdict["epic"] > 0:
+            notables.append("and there are no legendaries for sale, but at least there are some epics")
+
+        info = ", ".join(notables)
+
+        await ctx.send(info)
 
     @commands.command()
     @isLoaded()
