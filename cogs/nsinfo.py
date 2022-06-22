@@ -360,9 +360,9 @@ class nsinfo(commands.Cog):
             cdict[auction.CATEGORY.text] += 1
         
         if count < 50:
-            notables.append(f"The auction is quiet, with only {count} cards being traded")
+            notables.append(f"The market is quiet, with only {count} cards being traded")
         elif count < 200:
-            notables.append(f"The auction is rather busy, there are currently {count} cards available")
+            notables.append(f"The market is rather busy, there are currently {count} cards available")
         elif count < 500:
             notables.append(f"The flood is here, there are {count} cards on the market")
         elif count > 999:
