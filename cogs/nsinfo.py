@@ -147,7 +147,7 @@ class nsinfo(commands.Cog):
         mycursor = mydb.cursor()
         mycursor.execute(f'SELECT name FROM ns.nations WHERE NOT name = "{nation}" AND NOT unstatus = "Non-member" AND region = "{r.REGION.text}"')
         for x in mycursor.fetchall():
-            was.append(str(x)[2:-3])
+            was.append(str(x)[2:-3].lower().replace(" ","_"))
 
         for x in was:
             if x not in endos:
@@ -187,13 +187,36 @@ class nsinfo(commands.Cog):
         mycursor.execute(f'SELECT dbid FROM s1 WHERE name = "{nation}"')
         try:
             dbid = str(mycursor.fetchone()[0])
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info;cardid={dbid};season=1').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=1').text, 'xml')
+
+            ask = 10000.00
+            bid = 0.00
+            asks = 0
+            bids = 0
+
+            for market in r.find_all("MARKET"):
+                if market.TYPE.text == "bid":
+                    bids += 1  
+                    if float(market.PRICE.text) > bid:
+                        bid = float(market.PRICE.text)
+                elif market.TYPE.text == "ask":
+                    asks += 1
+                    if float(market.PRICE.text) < ask:
+                        ask = float(market.PRICE.text)
+
+            if asks == 0:
+                ask = "None"
+            if bids == 0:
+                bid = "None"
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=1", description=f'"{r.SLOGAN.text}"', color=color)
             embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s1/{r.FLAG.text}")
             embed.add_field(name="Market Value", value=r.MARKET_VALUE.text, inline=True)
             embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
+            embed.add_field(name="Card ID", value=r.CARDID.text, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=ask, inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=bid, inline=True)
 
             await ctx.send(embed=embed)
         except:
