@@ -58,6 +58,7 @@ class nsinfo(commands.Cog):
                 embed.add_field(name="Founded", value="Antiquity", inline=True)
             else:
                 embed.add_field(name="Founded", value=fdate, inline=True)
+            embed.add_field(name="ID", value=r.DBID.text, inline=True)
             embed.add_field(name="Most Recent Activity", value=f'<t:{int(r.LASTLOGIN.text)}:R>', inline=True)
             await ctx.send(embed=embed)
         except:
@@ -294,6 +295,9 @@ class nsinfo(commands.Cog):
         if int(r.NUM_CARDS.text) > 20000:
             await ctx.send(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nation}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
             return
+        elif int(r.NUM_CARDS.text) == 0:
+            await ctx.send(f"{nation} doesn't have any cards yet.")
+            return
         else:
             r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}").text, 'xml')
             cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
@@ -479,83 +483,81 @@ class nsinfo(commands.Cog):
 
     @commands.command()
     @isLoaded()
-    async def resolution(self, ctx, resolution):
-        prefix = resolution[:2].lower()
-        print(prefix)
-        if prefix == "ga":
-            council = 1
-        elif prefix == "sc":
-            council = 2
+    async def ga(self, ctx, *, id=None):
+        if id == None:
+            r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=resolution").text, 'xml')
+            ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
+
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=ga", description='by {}'.format(ar.NAME.text), color=color)
+            embed.set_thumbnail(url="https://www.nationstates.net/images/ga.jpg")
+            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+
+            await ctx.send(embed=embed)
         else:
-            await ctx.send("Please specify whether you are looking for information about a GA or SC resolution.")
-            return
+            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa=1&id={id}&q=resolution").text, 'xml')
 
-        r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa={council}&id={resolution[2:]}&q=resolution").text, 'xml')
-
-        color = int("2d0001", 16)
-        try:
-            r.REPEALED.text
-            embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-        except:
-            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={resolution[2:]}/council={council}", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-        embed.set_thumbnail(url=f"https://www.nationstates.net/images/{prefix}.jpg")
-        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
-
-        await ctx.send(embed=embed)
-
-    @resolution.error
-    async def resolution_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a resolution.")
-        elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("I can't find that resolution.")
-
-    @commands.command()
-    @isLoaded()
-    async def ga(self, ctx):
-        r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=resolution").text, 'xml')
-        ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
-
-        color = int("2d0001", 16)
-        embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=ga", description='by {}'.format(ar.NAME.text), color=color)
-        embed.set_thumbnail(url="https://www.nationstates.net/images/ga.jpg")
-        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
-
-        await ctx.send(embed=embed)
+            color = int("2d0001", 16)
+            try:
+                r.REPEALED.text
+                embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+            except:
+                embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+            embed.set_thumbnail(url=f"https://www.nationstates.net/images/ga.jpg")
+            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False) 
+            await ctx.send(embed=embed)
 
     @ga.error
     async def ga_error(self, ctx, error):
         if "n" not in get_cogs(ctx.guild.id):
             return
         elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("There is no General Assembly Resolution currently at vote.")
+            if ctx.message.content == "!ga":
+                await ctx.send("There is no General Assembly Resolution currently at vote.")
+            else:
+                await ctx.send("I can't find a General Assembly Resolution with that ID.")
         else:
             logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
-    async def sc(self, ctx):
-        r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=2&q=resolution").text, 'xml')
-        ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
+    async def sc(self, ctx, *, id=None):
+        if id == None:
+            r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=2&q=resolution").text, 'xml')
+            ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
 
-        color = int("2d0001", 16)
-        embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=sc", description='by {}'.format(ar.NAME.text), color=color)
-        embed.set_thumbnail(url="https://www.nationstates.net/images/sc.jpg")
-        embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-        embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=sc", description='by {}'.format(ar.NAME.text), color=color)
+            embed.set_thumbnail(url="https://www.nationstates.net/images/sc.jpg")
+            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
 
-        await ctx.send(embed=embed)
+            await ctx.send(embed=embed)
+        else:
+            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa=2&id={id}&q=resolution").text, 'xml')
+
+            color = int("2d0001", 16)
+            try:
+                r.REPEALED.text
+                embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=2", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+            except:
+                embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=2", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
+            embed.set_thumbnail(url=f"https://www.nationstates.net/images/sc.jpg")
+            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
+            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False) 
+            await ctx.send(embed=embed)
 
     @sc.error
     async def sc_error(self, ctx, error):
         if "n" not in get_cogs(ctx.guild.id):
             return
         elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("There is no Security Council Resolution currently at vote.")
+            if ctx.message.content == "!sc":
+                await ctx.send("There is no Security Council Resolution currently at vote.")
+            else:
+                await ctx.send("I can't find a Security Council Resoltion with that ID.")
         else:
             logerror(ctx, error)
 
