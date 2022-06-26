@@ -182,10 +182,11 @@ class nsinfo(commands.Cog):
     @commands.command()
     @isLoaded()
     async def s1(self, ctx, *, nation):
+        nat = nation.replace(" ","_").lower()
         mydb = connector()
         mycursor = mydb.cursor()
 
-        mycursor.execute(f'SELECT dbid FROM s1 WHERE name = "{nation}"')
+        mycursor.execute(f'SELECT dbid FROM s1 WHERE name = "{nat}"')
         try:
             dbid = str(mycursor.fetchone()[0])
             r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=1').text, 'xml')
@@ -235,10 +236,11 @@ class nsinfo(commands.Cog):
     @commands.command()
     @isLoaded()
     async def s2(self, ctx, *, nation):
+        nat = nation.replace(" ","_").lower()
         mydb = connector()
         mycursor = mydb.cursor()
 
-        mycursor.execute(f'SELECT dbid FROM s2 WHERE name = "{nation}"')
+        mycursor.execute(f'SELECT dbid FROM s2 WHERE name = "{nat}"')
         try:
             dbid = str(mycursor.fetchone()[0])
             r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=2').text, 'xml')
