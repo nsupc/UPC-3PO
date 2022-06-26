@@ -34,7 +34,7 @@ class nsinfo(commands.Cog):
         return commands.check(predicate)
 
     #Commands
-    @commands.command()
+    @commands.command(aliases=["n"])
     @isLoaded()
     async def nation(self, ctx, *, msg):
         try:
@@ -77,7 +77,7 @@ class nsinfo(commands.Cog):
         else:
             logerror(ctx, error)
 
-    @commands.command()
+    @commands.command(aliases=["tart"])
     @isLoaded()
     @commands.bot_has_permissions(attach_files=True)
     async def endotart(self, ctx, *, nation):
@@ -385,7 +385,7 @@ class nsinfo(commands.Cog):
 
         await ctx.send(info)
 
-    @commands.command()
+    @commands.command(aliases=["r"])
     @isLoaded()
     async def region(self, ctx, *, region):
         try:
