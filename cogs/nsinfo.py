@@ -299,7 +299,7 @@ class nsinfo(commands.Cog):
             await ctx.send(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nation}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
             return
         elif int(r.NUM_CARDS.text) == 0:
-            await ctx.send(f"{nation} doesn't have any cards yet.")
+            await ctx.send(f"{nation.title()} doesn't have any cards yet.")
             return
         else:
             r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}").text, 'xml')
