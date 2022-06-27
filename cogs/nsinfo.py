@@ -41,7 +41,7 @@ class nsinfo(commands.Cog):
             nat = msg.lower().replace(" ","_")
             r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat};q=fullname+motto+flag+region+wa+influence+category+answered+population+firstlogin+dbid+lastlogin+census;scale=65;mode=score').text, 'xml')
             region = r.REGION.text.lower().replace(" ","_")
-            inf = r.CENSUS.text.strip('\n\n')[:-3]
+            inf = "{:,}".format(int(r.CENSUS.text.strip('\n\n')[:-3]))
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=r.FULLNAME.text, url=f"https://nationstates.net/nation={nat}", description=f'"{r.MOTTO.text}"', color=color)
