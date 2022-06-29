@@ -39,23 +39,28 @@ class nsinfo(commands.Cog):
     async def nation(self, ctx, *, msg):
         try:
             nat = msg.lower().replace(" ","_")
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat};q=fullname+motto+flag+region+wa+influence+category+answered+population+firstlogin+dbid+lastlogin+census;scale=65;mode=score').text, 'xml')
+            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat};q=fullname+motto+flag+region+wa+influence+category+answered+population+firstlogin+dbid+lastlogin+census;scale=65+80;mode=score').text, 'xml')
             region = r.REGION.text.lower().replace(" ","_")
-            inf = "{:,}".format(int(r.CENSUS.text.strip('\n\n')[:-3]))
+    
+            census = []
+            for score in r.CENSUS.find_all("SCORE"):
+                census.append(round(float(score.text), 2))  
+
+            #inf = "{:,}".format(int(r.CENSUS.text.strip('\n\n')[:-3]))
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=r.FULLNAME.text, url=f"https://nationstates.net/nation={nat}", description=f'"{r.MOTTO.text}"', color=color)
             embed.set_thumbnail(url=r.FLAG.text)
-            embed.add_field(name="Region", value=f"[{r.REGION.text}](https://nationstates.net/region={region})", inline=True)
+            embed.add_field(name="Region", value=f"[{r.REGION.text}](https://nationstates.net/region={region}) ({census[1]} Days)", inline=True)
             embed.add_field(name="World Assembly Status", value=r.UNSTATUS.text, inline=True)
-            embed.add_field(name="Influence", value=f"{r.INFLUENCE.text} ({inf})", inline=True)
+            embed.add_field(name="Influence", value=f"{r.INFLUENCE.text} ({'{:,}'.format(int(census[0]))})", inline=True)
 
             embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
             embed.add_field(name="Issues", value=r.ISSUES_ANSWERED.text, inline=True)
 
             embed.add_field(name="Population", value=self.millify(r.POPULATION.text), inline=True)
             fdate = str(datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)))
-            if fdate == '1970-01-01':
+            if fdate == '1969-12-31':
                 embed.add_field(name="Founded", value="Antiquity", inline=True)
             else:
                 embed.add_field(name="Founded", value=fdate, inline=True)
