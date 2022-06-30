@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from functions import connector,get_log,get_cogs,logerror
+from functions import connector,get_log,get_cogs,logerror,get_prefix
 
 '''
 Add config command, shows which cogs are loaded in a server, prefix, log & welcome channels, etc etc
@@ -224,15 +224,16 @@ class config(commands.Cog):
 
     @commands.command()
     async def help(self, ctx, *, msg):
+        p = get_prefix(self, ctx)
         color = int("2d0001", 16)
 
         if(msg.lower() == "config"):
             embed = discord.Embed(title="Config", colour=color)
-            embed.add_field(name="changeprefix",value="Changes the bot's server command prefix.\nUsage: !changeprefix [prefix]", inline=False)
+            embed.add_field(name="changeprefix",value=f"Changes the bot's server command prefix.\nUsage: {p}changeprefix [prefix]", inline=False)
             embed.add_field(name="welcome",value="Designates a welcome channel and sets the server welcome message.", inline=False)
-            embed.add_field(name="log",value="Designates a channel to record the bot's server usage history.\nUsage: !log [channel id]", inline=False)
-            embed.add_field(name="addcog",value="Enables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
-            embed.add_field(name="remcog",value="Disables a set of commands in the server.\nUsage: !addcog [letter]", inline=False)
+            embed.add_field(name="log",value=f"Designates a channel to record the bot's server usage history.\nUsage: {p}log [channel id]", inline=False)
+            embed.add_field(name="addcog",value=f"Enables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
+            embed.add_field(name="remcog",value=f"Disables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
             embed.add_field(name="help",value="Displays information about the commands that are loaded in this server.", inline=False)
             embed.add_field(name="feedback",value="Sends upc feedback about the bot.", inline=False)
             embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
@@ -240,31 +241,32 @@ class config(commands.Cog):
 
         elif(msg.lower() == "nsinfo"):
             embed = discord.Embed(title="NSInfo", colour=color)
-            embed.add_field(name="nation",value="Displays information about a NationStates nation.\nUsage: !nation [nation]", inline=False)
-            embed.add_field(name="endotart",value="Outputs an HTML sheet containing links to every nation in a region not being endorsed by a nation, as listed in the region's Daily Dump.\nUsage: !endotart [nation]", inline=False)
-            embed.add_field(name="nne",value="Outputs an HTML sheet containing links to every nation in a region not endorsing a nation, as listed in the region's Daily Dump.\nUsage: !nne [nation]", inline=False)
-            embed.add_field(name="s1",value="Displays information about the Season 1 Trading Card of a nation.\nUsage: !s1 [nation]", inline=False)
-            embed.add_field(name="s2",value="Displays information about the Season 2 Trading Card of a nation.\nUsage: !s2 [nation]", inline=False)
-            embed.add_field(name="deck",value="Displays information about the deck of a nation.\nUsage: !deck [nation]", inline=False)
-            embed.add_field(name="region",value="Displays information about a NationStates region.\nUsage: !region [region]", inline=False)
-            embed.add_field(name="activity",value="Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: !activity [region]", inline=False)
-            embed.add_field(name="ga",value="Displays information about the at vote General Assembly resolution or a specified passed resolution.\nUsage: !ga [optional resolution id]", inline=False)
-            embed.add_field(name="sc",value="Displays information about the at vote Security Council resolution or a specified passed resolution.\nUsage: !sc [optional resolution id]", inline=False)
+            embed.add_field(name="nation",value=f"Displays information about a NationStates nation.\nUsage: {p}nation [nation]", inline=False)
+            embed.add_field(name="endotart",value=f"Outputs an HTML sheet containing links to every nation in a region not being endorsed by a nation, as listed in the region's Daily Dump.\nUsage: {p}endotart [nation]", inline=False)
+            embed.add_field(name="nne",value=f"Outputs an HTML sheet containing links to every nation in a region not endorsing a nation, as listed in the region's Daily Dump.\nUsage: {p}nne [nation]", inline=False)
+            embed.add_field(name="s1",value=f"Displays information about the Season 1 Trading Card of a nation.\nUsage: {p}s1 [nation]", inline=False)
+            embed.add_field(name="s2",value=f"Displays information about the Season 2 Trading Card of a nation.\nUsage: {p}s2 [nation]", inline=False)
+            embed.add_field(name="deck",value=f"Displays information about the deck of a nation.\nUsage: {p}deck [nation]", inline=False)
+            embed.add_field(name="market",value=f"Displays information about the trading card market.\nUsage: {p}market", inline=False)
+            embed.add_field(name="region",value=f"Displays information about a NationStates region.\nUsage: {p}region [region]", inline=False)
+            embed.add_field(name="activity",value=f"Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: {p}activity [region]", inline=False)
+            embed.add_field(name="ga",value=f"Displays information about the at vote General Assembly resolution or a specified passed resolution.\nUsage: {p}ga [optional resolution id]", inline=False)
+            embed.add_field(name="sc",value=f"Displays information about the at vote Security Council resolution or a specified passed resolution.\nUsage: {p}sc [optional resolution id]", inline=False)
             await ctx.send(embed=embed)
 
         elif(msg.lower() == "verification"):
             embed = discord.Embed(title="Verification", colour=color)
-            embed.add_field(name="verify",value="Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: !verify [nation]", inline=False)
-            embed.add_field(name="id",value="Displays NationStates nations associated with a particular Discord user.\nUsage: !id [user]", inline=False)
+            embed.add_field(name="verify",value=f"Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: {p}verify [nation]", inline=False)
+            embed.add_field(name="id",value=f"Displays NationStates nations associated with a particular Discord user.\nUsage: {p}id [user]", inline=False)
             await ctx.send(embed=embed)
 
         elif(msg.lower() == "admin"):
             embed = discord.Embed(title="Admin Tools", colour=color)
-            embed.add_field(name="kick",value="Kicks a user from the server.\nUsage: !kick [user] [optional reason]", inline=False)
-            embed.add_field(name="ban",value="Bans a user from the server.\nUsage: !ban [user] [optional reason]", inline=False)
-            embed.add_field(name="unban",value="Unbans a user from the server.\nUsage: !ban [user]", inline=False)
-            embed.add_field(name="addrole",value="Adds a role to a user.\nUsage: !addrole [user] '[role]'", inline=False)
-            embed.add_field(name="remrole",value="Removes a role from a user.\nUsage: !remrole [user] '[role]'", inline=False)
+            embed.add_field(name="kick",value=f"Kicks a user from the server.\nUsage: {p}kick [user] [optional reason]", inline=False)
+            embed.add_field(name="ban",value=f"Bans a user from the server.\nUsage: {p}ban [user] [optional reason]", inline=False)
+            embed.add_field(name="unban",value=f"Unbans a user from the server.\nUsage: {p}unban [user]", inline=False)
+            embed.add_field(name="addrole",value=f"Adds a role to a user.\nUsage: {p}addrole [user] '[role]'", inline=False)
+            embed.add_field(name="remrole",value=f"Removes a role from a user.\nUsage: {p}remrole [user] '[role]'", inline=False)
             await ctx.send(embed=embed)
 
         else:
@@ -274,6 +276,8 @@ class config(commands.Cog):
     async def help_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("What do you need help with? Type !help followed by one of the following: config, nsinfo, verification, or admin")
+        else:
+            print(error)
 
 def setup(bot):
     bot.add_cog(config(bot))
