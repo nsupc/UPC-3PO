@@ -60,7 +60,7 @@ class nsinfo(commands.Cog):
 
             embed.add_field(name="Population", value=self.millify(r.POPULATION.text), inline=True)
             fdate = str(datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)))
-            if fdate == '1969-12-31':
+            if fdate in ['1969-12-31', '1970-01-01']:
                 embed.add_field(name="Founded", value="Antiquity", inline=True)
             else:
                 embed.add_field(name="Founded", value=fdate, inline=True)
@@ -301,7 +301,7 @@ class nsinfo(commands.Cog):
         r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+info;nationname={nat}").text, 'xml')
 
         if int(r.NUM_CARDS.text) > 20000:
-            await ctx.send(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nation}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
+            await ctx.send(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nation.title()}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
             return
         elif int(r.NUM_CARDS.text) == 0:
             await ctx.send(f"{nation.title()} doesn't have any cards yet.")
