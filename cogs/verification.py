@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import time
+import math
 
 from functions import api_call,connector,get_cogs,logerror
 
@@ -26,65 +27,80 @@ class verification(commands.Cog):
     async def verify(self, ctx, *, nation):
         mydb = connector()
         nat = nation.lower().replace(" ", "_")
+        ids = []
+
+        mycursor = mydb.cursor()
+        mycursor.execute(f"SELECT nation FROM reg WHERE userid = '{ctx.author.id}' AND serverid = '{ctx.guild.id}'")
+        myresult = mycursor.fetchall()
+        
+        if myresult:
+            for name in myresult:        
+                ids.append(name[0])
+
+            if nat in ids:
+                await ctx.send(f"You've already verified {nation} in this server.")
+                return
+
+        def check(m):
+            return m.author == ctx.author and m.channel == channel
+        channel = await ctx.author.create_dm()
+        await channel.send(f"Hello and welcome to version 2 of the UPC-3PO verification system!\nPlease go to https://www.nationstates.net/page=verify_login while signed in as '{nation}' and dm me the code that you see there.\nThank you!")
+        
         try:
-            if(bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=name').text, 'xml').NAME.text):
-                try:
-                    channel = await ctx.author.create_dm()
-                    def check(m):
-                        return m.author == ctx.author and m.channel == channel
-                    try:
-                        mycursor = mydb.cursor()
-
-                        sql = "INSERT INTO reg (userid, serverid, nation, timestamp, verified) VALUES (%s, %s, %s, %s, %s)"
-                        val = (ctx.author.id, ctx.guild.id, nat, time.time(), 0)
-                        mycursor.execute(sql,val)
-                        mydb.commit()
-                        await ctx.author.send("Hello and welcome to the UPC-3PO verification system!\nPlease go to https://www.nationstates.net/page=verify_login while signed in as '{}' and dm me the code that you see there.\nThank you!".format(nation))
-                        msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                        code = str(msg.content)
-                        try:
-                            mycursor.execute("SELECT * FROM reg WHERE userid = '{}' AND serverid = '{}' AND nation = '{}' AND verified = '0' ORDER BY timestamp ASC LIMIT 1".format(ctx.author.id, ctx.guild.id, nat))
-                            data = mycursor.fetchone()
-
-                            r = api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?a=verify&nation={nat}&checksum={code}').text
-
-                            if int(r) == 1:
-                                mycursor.execute("UPDATE reg SET verified = 1 WHERE id = {}".format(data[0])) 
-                                mydb.commit()
-                                await ctx.send("{} is now a verified identity of {}.".format(nation, ctx.author))
-                                return     
-                        except:
-                            await ctx.author.send("Uh oh, something went wrong. Please make sure that you're signed in with the correct nation and try again.")
-                    except:
-                        await ctx.author.send("You did not answer in given time, please restart.")
-                except discord.errors.Forbidden:
-                    await ctx.send(ctx.message.author.mention + ", it appears that I can't send you direct messages. Please check your Discord permissions and try again.")
+            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+            code = str(msg.content)
         except:
-            await ctx.send("Hmm, I can't seem to find that nation.")
+            await channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+        r = api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?a=verify&nation={nat}&checksum={code}').text
+
+        if int(r) == 1:
+            sql = "INSERT INTO reg (userid, serverid, nation, timestamp) VALUES (%s, %s, %s, %s)"
+            val = (ctx.author.id, ctx.guild.id, nat, time.time())
+            mycursor.execute(sql,val)
+            mydb.commit()
+
+            await channel.send("Thanks, you're all set!")
+            await ctx.send(f"{nation} is now a verified identity of {ctx.author}.")
+        elif int(r) == 0:
+            await channel.send("It looks like something went wrong, please try again.")
+
+    @verify.error
+    async def verify_error(self, ctx, error):
+        if isinstance(error, commands.CommandInvokeError):
+            await ctx.send(f"{ctx.message.author.mention}, it seems like I can't send you direct messages. Please check your Discord privacy settings and try again.")
+        else:
+            print(error)
 
     @commands.command()
     @isLoaded()
-    @commands.has_permissions(kick_members=True)
     async def id(self, ctx, member : commands.MemberConverter):
         mydb = connector()
         mycursor = mydb.cursor()
-        mycursor.execute(f"SELECT * FROM reg WHERE userid = '{member.id}' AND serverid = '{ctx.guild.id}' AND verified = 1")
+        mycursor.execute(f"SELECT nation FROM reg WHERE userid = '{member.id}' AND serverid = '{ctx.guild.id}'")
         myresult = mycursor.fetchall()
 
-        if myresult:
+        if not myresult:
+            await ctx.send(f"{member.name} has no verified identities in this server.")
+            return
+
+        count = 1
+        for i in range(0, len(myresult), 10):
+            chunk = myresult[i: i + 10]
+
             color = int("2d0001", 16)
             embed=discord.Embed(title=f"Verified identities of {member.name}", color=color)
             embed.add_field(name="User:", value=f"<@!{member.id}>")
-            for x in myresult:
-                embed.add_field(name="Nation", value=f"https://www.nationstates.net/nation={x[3]}", inline=False)
+            for item in chunk:
+                embed.add_field(name="Nations:" if item == chunk[0] else "\u200b", value=f"https://www.nationstates.net/nation={item[0]}", inline=False)
+            embed.set_footer(text=f"Page {count} of {int(math.ceil(len(myresult) / 10))}")
             await ctx.send(embed=embed)
-        else:
-            await ctx.send(f"{member.name} has no verified nations in this server.")
-        
+            count += 1
+
     @id.error
     async def id_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
+        if isinstance(error, commands.MemberNotFound):
+            await ctx.send("Sorry, I can't find that user.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
         elif isinstance(error, commands.CheckFailure):
