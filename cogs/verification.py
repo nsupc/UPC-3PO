@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import time
 import math
 
-from functions import api_call,connector,get_cogs,logerror
+from functions import api_call,connector,get_cogs,logerror,log
 
 load_dotenv()
 
@@ -71,38 +71,28 @@ class verification(commands.Cog):
 
             mydb = connector()
             mycursor = mydb.cursor()
-            mycursor.execute(f'SELECT region, resident, visitor FROM guild WHERE serverid = "{ctx.guild.id}"')
+            mycursor.execute(f"SELECT region FROM guild WHERE serverid = '{ctx.guild.id}'")
+            region = mycursor.fetchone()[0]
 
-            rtuple = mycursor.fetchone()
-
-            if not rtuple:
+            if not region:
                 return
 
-            res = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region").text, "xml").REGION.text.lower().replace(" ", "_")
+            mycursor.execute(f"SELECT resident FROM guild WHERE serverid = '{ctx.guild.id}'")
+            resident = mycursor.fetchone()[0]
 
-            print(res)
-            print(rtuple)
+            mycursor.execute(f"SELECT visitor FROM guild WHERE serverid = '{ctx.guild.id}'")
+            visitor = mycursor.fetchone()[0]
 
-            if res == rtuple[0]:
-                role = ctx.guild.get_role(int(rtuple[1]))
+            region_of_residency = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region").text, "xml").REGION.text.lower().replace(" ", "_")
+
+            if region == region_of_residency and resident:
+                role = ctx.guild.get_role(int(resident))
                 await ctx.author.add_roles(role)
-            else:
-                role = ctx.guild.get_role(int(rtuple[2]))
+            elif visitor:
+                role = ctx.guild.get_role(int(visitor))
                 await ctx.author.add_roles(role)
 
-            mydb = connector()
-            mycursor = mydb.cursor()
-            mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{ctx.guild.id}"')
-            logid = mycursor.fetchone()[0]
-
-            print(logid)  
-
-            if not logid:
-                return
-
-            logchannel = self.bot.get_channel(int(logid))
-            await logchannel.send(f"<t:{int(time.time())}:F>: {ctx.author} was verified the nation {nat} and was added to role '{role.name}'")
-
+            await log(self.bot, ctx, f"{ctx.author} was verified as the owner of {nation} and was given the role '{role.name}'")
 
         elif int(r) == 0:
             await channel.send("It looks like something went wrong, please try again.")
