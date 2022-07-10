@@ -259,5 +259,5 @@ class balder(commands.Cog):
         else:
             logerror(ctx, error)
 
-def setup(bot):
-    bot.add_cog(balder(bot))
+async def setup(bot):
+    await bot.add_cog(balder(bot))

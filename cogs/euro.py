@@ -87,5 +87,5 @@ class euro(commands.Cog):
         self.check_proposals.stop()
         await ctx.send("Stopped.")    
 
-def setup(bot):
-    bot.add_cog(euro(bot))
+async def setup(bot):
+    await bot.add_cog(euro(bot))

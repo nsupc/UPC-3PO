@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
+import asyncio
 
 from functions import get_prefix
 
@@ -14,9 +15,10 @@ bot = commands.Bot(command_prefix=get_prefix, intents=intents)
 bot.remove_command("help")
 
 #Cogs
-default_cogs = ['nsinfo','verification','admin','config','euro','swag','balder']
-for x in default_cogs:
-    bot.load_extension(f"cogs.{x}")
+async def load_cogs():
+    default_cogs = ['nsinfo','verification','admin','config','euro','swag','balder']
+    for x in default_cogs:
+        await bot.load_extension(f"cogs.{x}")
 
 #Checks
 def isUPC():
@@ -33,7 +35,7 @@ async def on_ready():
 @bot.command()
 @isUPC()
 async def load(ctx, extension):
-    bot.load_extension(f'cogs.{extension.lower()}')
+    await bot.load_extension(f'cogs.{extension.lower()}')
     await ctx.send(f"Extension {extension.lower()} has been loaded.")
 
 @load.error
@@ -46,7 +48,7 @@ async def load_error(ctx, error):
 @bot.command()
 @isUPC()
 async def unload(ctx, extension):
-    bot.unload_extension(f'cogs.{extension.lower()}')
+    await bot.unload_extension(f'cogs.{extension.lower()}')
     await ctx.send(f"Extension {extension.lower()} has been unloaded.")
 
 @unload.error
@@ -59,7 +61,7 @@ async def unload_error(ctx, error):
 @bot.command()
 @isUPC()
 async def reload(ctx, extension):
-    bot.reload_extension(f'cogs.{extension.lower()}')
+    await bot.reload_extension(f'cogs.{extension.lower()}')
     await ctx.send(f"Extension {extension.lower()} has been reloaded.")
 
 @reload.error
@@ -90,4 +92,9 @@ async def errorsize_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.send("You do not have permission to run that command.")
 
-bot.run(TOKEN)
+async def main():
+    async with bot:
+        await load_cogs()
+        await bot.start(TOKEN)
+
+asyncio.run(main())

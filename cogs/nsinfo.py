@@ -569,5 +569,5 @@ class nsinfo(commands.Cog):
         else:
             logerror(ctx, error)
 
-def setup(bot):
-    bot.add_cog(nsinfo(bot))
+async def setup(bot):
+    await bot.add_cog(nsinfo(bot))

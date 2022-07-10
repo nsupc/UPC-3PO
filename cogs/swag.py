@@ -42,5 +42,5 @@ class swag(commands.Cog):
     async def isty(self, ctx):
         await ctx.send("¡ɹnɐllǝɥ")
 
-def setup(bot):
-    bot.add_cog(swag(bot))
+async def setup(bot):
+    await bot.add_cog(swag(bot))
