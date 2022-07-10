@@ -92,7 +92,7 @@ class verification(commands.Cog):
                 role = ctx.guild.get_role(int(visitor))
                 await ctx.author.add_roles(role)
 
-            await log(self.bot, ctx, f"{ctx.author} was verified as the owner of {nation} and was given the role '{role.name}'")
+            await log(self.bot, ctx.guild.id, f"{ctx.author} was verified as the owner of {nation} and was given the role '{role.name}'")
 
         elif int(r) == 0:
             await channel.send("It looks like something went wrong, please try again.")

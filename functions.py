@@ -70,10 +70,10 @@ def get_log(id):
     data = mycursor.fetchone()
     return int(data[0])
 
-async def log(bot, ctx, action):
+async def log(bot, id, action):
     mydb = connector()
     mycursor = mydb.cursor()
-    mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{ctx.guild.id}" LIMIT 1')
+    mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{id}" LIMIT 1')
     data = int(mycursor.fetchone()[0])
 
     if not data:
