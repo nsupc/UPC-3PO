@@ -504,6 +504,7 @@ class nsinfo(commands.Cog):
             embed.set_thumbnail(url="https://www.nationstates.net/images/ga.jpg")
             embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
             embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+            embed.add_field(name="Voting Ends", value=f"<t:{str(int(r.PROMOTED.text) + 345600)}:R>") 
 
             await ctx.send(embed=embed)
         else:
@@ -517,7 +518,7 @@ class nsinfo(commands.Cog):
                 embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
             embed.set_thumbnail(url=f"https://www.nationstates.net/images/ga.jpg")
             embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False) 
+            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
             await ctx.send(embed=embed)
 
     @ga.error
@@ -544,6 +545,7 @@ class nsinfo(commands.Cog):
             embed.set_thumbnail(url="https://www.nationstates.net/images/sc.jpg")
             embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
             embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
+            embed.add_field(name="Voting Ends", value=f"<t:{str(int(r.PROMOTED.text) + 345600)}:R>") 
 
             await ctx.send(embed=embed)
         else:
