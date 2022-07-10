@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Select
 
-from functions import connector,get_log,get_cogs,logerror,get_prefix
+from functions import connector,log,get_cogs,logerror,get_prefix
 
 '''
 Add config command, shows which cogs are loaded in a server, prefix, log & welcome channels, etc etc
@@ -22,6 +22,12 @@ class config(commands.Cog):
         x = mycursor.fetchone()
         welcome = self.bot.get_channel(int(x[0]))
         await welcome.send(f"{x[1].replace('<user>', member.mention)}")
+
+        await log(self.bot, member.guild.id, f"{member.name} joined the server.")
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        await log(self.bot, member.guild.id, f"{member.name} left the server.")
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -119,8 +125,8 @@ class config(commands.Cog):
         mycursor = mydb.cursor()
         mycursor.execute(f'UPDATE guild SET logchannel = "{id}" WHERE serverid = "{ctx.guild.id}"')
         mydb.commit()
-        log = self.bot.get_channel(get_log(ctx.guild.id))
-        await log.send("This channel is now the log channel.")
+
+        await log(self.bot, ctx.guild.id, f"This is now the log channel")
 
     @log.error
     async def log_error(self, ctx, error):
