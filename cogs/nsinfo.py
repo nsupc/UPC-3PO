@@ -70,7 +70,7 @@ class nsinfo(commands.Cog):
         except:
             color = int("2d0001", 16)
             file = discord.File("./media/exnation.png", filename="image.png")
-            embed=discord.Embed(title=msg, url=f"https://www.nationstates.net/page=boneyard?nation={nat}", description=f"'If an item does not appear in our records, it does not exist.'\n-Jocasta Nu\nPerhaps the nation you're looking for is in the Boneyard?", color=color)
+            embed=discord.Embed(title=msg.title(), url=f"https://www.nationstates.net/page=boneyard?nation={nat}", description=f"'If an item does not appear in our records, it does not exist.'\n-Jocasta Nu\nPerhaps the nation you're looking for is in the Boneyard?", color=color)
             embed.set_thumbnail(url="attachment://image.png")
             await ctx.send(file=file, embed=embed)
 
@@ -309,6 +309,7 @@ class nsinfo(commands.Cog):
         else:
             r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}").text, 'xml')
             cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
+            sdict = {"1": 0, "2": 0}
             sum = 0
             values = []
             labels = []
@@ -317,6 +318,7 @@ class nsinfo(commands.Cog):
 
             for card in r.find_all("CARD"):
                 cdict[card.CATEGORY.text] += 1
+                sdict[card.SEASON.text] += 1
                 sum += 1
 
             path = nat + "_deck.jpg"
@@ -342,6 +344,7 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Bank", value=f"{r.BANK.text}", inline=True)
             embed.add_field(name="Number of Cards", value = f"{sum}", inline=True)
             embed.set_image(url=f"attachment://{path}")
+            embed.set_footer(text=f"Season 1 Cards: {sdict['1']}, Season 2 Cards: {sdict['2']}")
 
             await ctx.send(file=file, embed=embed)
             os.remove(path)
