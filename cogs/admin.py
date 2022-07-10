@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import time
 
-from functions import get_log,get_cogs,logerror
+from functions import get_cogs,logerror,log
 
 class admin(commands.Cog):
 
@@ -24,11 +24,8 @@ class admin(commands.Cog):
     async def addrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
         await member.add_roles(role)
         await ctx.send(f"{member.name} has been added to {role}.")
-        try:
-            log = self.bot.get_channel(get_log(ctx.guild.id))
-            await log.send(f"<t:{int(time.time())}:F>: {member} was added to role '{role}'")
-        except:
-            return
+        await log(self.bot, ctx, f"{member} was given the role {role}")
+
 
     @addrole.error
     async def addrole_error(self, ctx, error):
@@ -55,11 +52,8 @@ class admin(commands.Cog):
     async def remrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
         await member.remove_roles(role)
         await ctx.send(f"{member.name} has been removed from {role}.")
-        try:
-            log = self.bot.get_channel(get_log(ctx.guild.id))
-            await log.send(f"<t:{int(time.time())}:F>: {member} was removed from role '{role}'")
-        except:
-            return
+        await log(self.bot, ctx, f"{member} was removed from the role {role}")
+
 
     @remrole.error
     async def remrole_error(self, ctx, error):
@@ -86,11 +80,7 @@ class admin(commands.Cog):
     async def kick(self, ctx, member : commands.MemberConverter, *, reason = "None"):
         await member.kick(reason = reason)
         await ctx.send(f"{member} has been kicked.")
-        try:
-            log = self.bot.get_channel(get_log(ctx.guild.id))
-            await log.send(f"<t:{int(time.time())}:F>: {member} was kicked by {ctx.author} for reason '{reason}'")
-        except:
-            return
+        await log(self.bot, ctx, f"{member} was kicked by {ctx.author} for '{reason}'")
 
     @kick.error
     async def kick_error(self, ctx, error):
@@ -115,12 +105,7 @@ class admin(commands.Cog):
     async def ban(self, ctx, member : commands.MemberConverter, *, reason = "None"):
         await member.ban(reason = reason)
         await ctx.send(f"{member} has been banned.")
-        log = self.bot.get_channel(get_log(ctx.guild.id))
-        try:
-            log = self.bot.get_channel(get_log(ctx.guild.id))
-            await log.send(f"<t:{int(time.time())}:F>: {member} was banned by {ctx.author} for reason '{reason}'")
-        except:
-            return
+        await log(self.bot, ctx, f"{member} was banned by {ctx.author} for '{reason}'")
 
     @ban.error
     async def ban_error(self, ctx, error):
@@ -150,11 +135,7 @@ class admin(commands.Cog):
             if(user.name, user.discriminator) == (name, discriminator):
                 await ctx.guild.unban(user)
                 await ctx.send(f"{member} has been unbanned.")
-                try:
-                    log = self.bot.get_channel(get_log(ctx.guild.id))
-                    await log.send(f"<t:{int(time.time())}:F>: {member} was unbanned by {ctx.author}")
-                except:
-                    return
+                await log(self.bot, ctx, f"{member} was unbanned by {ctx.author}")
 
     @unban.error
     async def unban_error(self, ctx, error):
