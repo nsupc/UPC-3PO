@@ -72,7 +72,7 @@ class verification(commands.Cog):
             mydb = connector()
             mycursor = mydb.cursor()
             mycursor.execute(f"SELECT region FROM guild WHERE serverid = '{ctx.guild.id}'")
-            region = mycursor.fetchone()[0]
+            region = mycursor.fetchone()[0].split(",")
 
             if not region:
                 return
@@ -85,7 +85,7 @@ class verification(commands.Cog):
 
             region_of_residency = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region").text, "xml").REGION.text.lower().replace(" ", "_")
 
-            if region == region_of_residency and resident:
+            if region_of_residency in region and resident:
                 role = ctx.guild.get_role(int(resident))
                 await ctx.author.add_roles(role)
             elif visitor:
