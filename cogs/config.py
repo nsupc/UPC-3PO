@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ui import View, Select
 
 from functions import connector,get_log,get_cogs,logerror,get_prefix
 
@@ -134,39 +135,173 @@ class config(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def welcome(self, ctx):
-        try:
-            def check(m):
-                return m.author == ctx.author and m.channel == ctx.channel
-            await ctx.send("Which channel would you like to set as the welcome channel?")
-            wid = await self.bot.wait_for('message', timeout=60.0, check=check)
-            try:
-                welcome = self.bot.get_channel(int(wid.content))
-                await welcome.send("This channel has been set as the welcome channel")
+
+        select = Select(
+            placeholder = "Please choose an option.",
+            options=[
+            discord.SelectOption(label="Welcome Channel", value="channel"),
+            discord.SelectOption(label="Welcome Message", value="message"),
+            discord.SelectOption(label="Region", value="region"),
+            discord.SelectOption(label="Resident Role", value="resident"),
+            discord.SelectOption(label="Visitor Role", value="visitor"),
+            discord.SelectOption(label="Exit Setup", value="exit"),
+            ]
+        )
+
+        async def select_callback(interaction):
+            if interaction.user != ctx.message.author:
+                return
+
+            response = select.values[0]
+            if response == "exit":
+                await interaction.response.edit_message(content="Shutting down setup.", view=None)
+                return
+                
+            elif response == "channel":
+                await interaction.response.send_message("What is the channel ID for your welcome channel?")
+
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+
+                try:
+                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                except:
+                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+                
+                try:
+                    welcomeid = int(msg.content)
+                except:
+                    await ctx.send("Channel IDs should be numbers.")
+
+                welcome = self.bot.get_channel(welcomeid)
+
+                channels = []
+
+                for channel in ctx.guild.text_channels:
+                    channels.append(channel)
+
+                if welcome not in channels:
+                    await ctx.send("The welcome channel must be a text channel in this server.")
+                    return
+
                 mydb = connector()
                 mycursor = mydb.cursor()
-                mycursor.execute(f'UPDATE guild SET welcomechannel = "{wid.content}" WHERE serverid = "{ctx.guild.id}"')
-                await ctx.send("What would you like the welcome message to be? 500 characters max.\nUse ``<user>`` in your message where you would like me to ping new members.")
-                wcontent = await self.bot.wait_for('message', timeout=60.0, check=check)
-                try:
-                    mycursor.execute(f"UPDATE guild SET welcome = '{wcontent.content}' WHERE serverid = '{ctx.guild.id}'")
-                    mydb.commit()
-                    await ctx.send(f"``{wcontent.content}`` has been set as this server's welcome message.")
-                except:
-                    await ctx.send("Something has gone wrong, please try again.")
-            except:
-                await ctx.send("Sorry, that channel doesn't exist or I can't see it.")
-        except:
-            await ctx.send("Sorry, you ran out of time. If you want to set up a welcome channel and message, please retry.")
+                mycursor.execute(f'UPDATE guild SET welcomechannel = "{welcomeid}" WHERE serverid = "{ctx.guild.id}"')
+                mydb.commit()
+                await ctx.send(f"{welcome.mention} has been set as the welcome channel.")
 
-    @welcome.error
-    async def welcome_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a channel.")
-        else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
+            elif response == "message":
+                await interaction.response.send_message("What would you like to use as your welcome message? Write ``<user>`` where you want me to ping the new member.")
+
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+
+                try:
+                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                except:
+                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+                
+                content = str(msg.content)
+
+                if len(content) > 500:
+                    await ctx.send("Your welcome message should be 500 characters maximum.")
+                    return
+
+                try:
+                    mydb = connector()
+                    mycursor = mydb.cursor()
+                    mycursor.execute(f"UPDATE guild SET welcome = '{content}' WHERE serverid = '{ctx.guild.id}'")
+                    mydb.commit()
+                    await ctx.send(f"Your welcome message has been set.")
+                except:
+                    await ctx.send("Sorry, it looks like something has gone wrong.")
+
+            elif response == "region":
+                await interaction.response.send_message("What gameside region is this server for?")
+
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+
+                try:
+                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                except:
+                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+                
+                region = msg.content.lower().replace(" ","_")
+
+                mydb = connector()
+                mycursor = mydb.cursor()
+                mycursor.execute(f'UPDATE guild SET region = "{region}" WHERE serverid = "{ctx.guild.id}"')
+                mydb.commit()
+                await ctx.send(f"'{region}' has been set as this server's region.")
+
+            elif response == "resident":
+                await interaction.response.send_message("What is the role ID for your resident role?")
+
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+
+                try:
+                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                except:
+                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+                
+                try:
+                    roleid = int(msg.content)
+                except:
+                    await ctx.send("Role IDs should be numbers.")
+
+                roles = []
+
+                for role in ctx.guild.roles:
+                    roles.append(role.id)
+
+                if roleid not in roles:
+                    await ctx.send("I can't find that role in this server.")
+                    return
+
+                mydb = connector()
+                mycursor = mydb.cursor()
+                mycursor.execute(f'UPDATE guild SET resident = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
+                mydb.commit()
+                await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the resident role.")
+
+            elif response == "visitor":
+                await interaction.response.send_message("What is the role ID for your visitor role?")
+
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+
+                try:
+                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                except:
+                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+                
+                try:
+                    roleid = int(msg.content)
+                except:
+                    await ctx.send("Role IDs should be numbers.")
+
+                roles = []
+
+                for role in ctx.guild.roles:
+                    roles.append(role.id)
+
+                if roleid not in roles:
+                    await ctx.send("I can't find that role in this server.")
+                    return
+
+                mydb = connector()
+                mycursor = mydb.cursor()
+                mycursor.execute(f'UPDATE guild SET visitor = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
+                mydb.commit()
+                await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the visitor role.")
+
+        select.callback = select_callback
+        view = View()
+        view.add_item(select)
+
+        await ctx.send(view=view)
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -279,5 +414,5 @@ class config(commands.Cog):
         else:
             print(error)
 
-def setup(bot):
-    bot.add_cog(config(bot))
+async def setup(bot):
+    await bot.add_cog(config(bot))
