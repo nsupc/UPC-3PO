@@ -42,13 +42,6 @@ def get_prefix(bot, msg):
         data = mycursor.fetchone()
         return str(data[0])
 
-def get_log(id):
-    mydb = connector()
-    mycursor = mydb.cursor()
-    mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{id}" LIMIT 1')
-    data = mycursor.fetchone()
-    return int(data[0])
-
 def get_cogs(id):
     mydb = connector()
     mycursor = mydb.cursor()
@@ -69,3 +62,23 @@ def logerror(ctx, error):
     f = open("error.txt", "a")
     f.write(f"{int(time.time())}: {type(error)} occured from command invocation {ctx.message.content}\n")
     f.close()
+
+def get_log(id):
+    mydb = connector()
+    mycursor = mydb.cursor()
+    mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{id}" LIMIT 1')
+    data = mycursor.fetchone()
+    return int(data[0])
+
+async def log(bot, ctx, action):
+    mydb = connector()
+    mycursor = mydb.cursor()
+    mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{ctx.guild.id}" LIMIT 1')
+    data = int(mycursor.fetchone()[0])
+
+    if not data:
+        return
+
+    channel = bot.get_channel(data)
+
+    await channel.send(f"<t:{int(time.time())}:F>: {action}")    
