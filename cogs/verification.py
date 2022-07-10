@@ -33,7 +33,9 @@ class verification(commands.Cog):
         mycursor.execute(f"SELECT nation FROM reg WHERE userid = '{ctx.author.id}' AND serverid = '{ctx.guild.id}'")
         myresult = mycursor.fetchall()
         
-        if myresult:
+        if not myresult:
+            ids = []
+        else:
             for name in myresult:        
                 ids.append(name[0])
 
@@ -43,9 +45,13 @@ class verification(commands.Cog):
 
         def check(m):
             return m.author == ctx.author and m.channel == channel
-        channel = await ctx.author.create_dm()
-        await channel.send(f"Hello and welcome to version 2 of the UPC-3PO verification system!\nPlease go to https://www.nationstates.net/page=verify_login while signed in as '{nation}' and dm me the code that you see there.\nThank you!")
-        
+
+        try:
+            channel = await ctx.author.create_dm()
+            await channel.send(f"Hello and welcome to version 2 of the UPC-3PO verification system!\nPlease go to https://www.nationstates.net/page=verify_login while signed in as '{nation}' and dm me the code that you see there.\nThank you!")
+        except:
+            await ctx.send(f"{ctx.message.author.mention}, it seems like I can't send you direct messages. Please check your Discord privacy settings and try again.")
+
         try:
             msg = await self.bot.wait_for('message', timeout=60.0, check=check)
             code = str(msg.content)
@@ -61,16 +67,54 @@ class verification(commands.Cog):
             mydb.commit()
 
             await channel.send("Thanks, you're all set!")
-            await ctx.send(f"{nation} is now a verified identity of {ctx.author}.")
+            await ctx.send(f"https://www.nationstates.net/nation={nat} is now a verified identity of {ctx.author}.")
+
+            mydb = connector()
+            mycursor = mydb.cursor()
+            mycursor.execute(f'SELECT region, resident, visitor FROM guild WHERE serverid = "{ctx.guild.id}"')
+
+            rtuple = mycursor.fetchone()
+
+            if not rtuple:
+                return
+
+            res = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region").text, "xml").REGION.text.lower().replace(" ", "_")
+
+            print(res)
+            print(rtuple)
+
+            if res == rtuple[0]:
+                role = ctx.guild.get_role(int(rtuple[1]))
+                await ctx.author.add_roles(role)
+            else:
+                role = ctx.guild.get_role(int(rtuple[2]))
+                await ctx.author.add_roles(role)
+
+            mydb = connector()
+            mycursor = mydb.cursor()
+            mycursor.execute(f'SELECT logchannel FROM guild WHERE serverid = "{ctx.guild.id}"')
+            logid = mycursor.fetchone()[0]
+
+            print(logid)  
+
+            if not logid:
+                return
+
+            logchannel = self.bot.get_channel(int(logid))
+            await logchannel.send(f"<t:{int(time.time())}:F>: {ctx.author} was verified the nation {nat} and was added to role '{role.name}'")
+
+
         elif int(r) == 0:
             await channel.send("It looks like something went wrong, please try again.")
 
     @verify.error
     async def verify_error(self, ctx, error):
-        if isinstance(error, commands.CommandInvokeError):
-            await ctx.send(f"{ctx.message.author.mention}, it seems like I can't send you direct messages. Please check your Discord privacy settings and try again.")
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation to verify.")
+        elif isinstance(error, commands.CheckFailure):
+            return
         else:
-            print(error)
+            logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
@@ -108,5 +152,5 @@ class verification(commands.Cog):
         else:
             logerror(ctx, error)
 
-def setup(bot):
-    bot.add_cog(verification(bot))
+async def setup(bot):
+    await bot.add_cog(verification(bot))
