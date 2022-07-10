@@ -325,7 +325,6 @@ class nsinfo(commands.Cog):
 
             count = 0
             for x in cdict:
-                print(cdict[x])
                 if cdict[x] != 0:
                     labels.append(f"{x.title()} ({cdict[x]})")
                     values.append(cdict[x])
