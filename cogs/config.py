@@ -23,11 +23,11 @@ class config(commands.Cog):
         welcome = self.bot.get_channel(int(x[0]))
         await welcome.send(f"{x[1].replace('<user>', member.mention)}")
 
-        await log(self.bot, member.guild.id, f"{member.name} joined the server.")
+        await log(self.bot, member.guild.id, f"<@!{member.id}> joined the server.")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        await log(self.bot, member.guild.id, f"{member.name} left the server.")
+        await log(self.bot, member.guild.id, f"<@!{member.id}> left the server.")
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -415,8 +415,9 @@ class config(commands.Cog):
 
     @help.error
     async def help_error(self, ctx, error):
+        p = get_prefix(self, ctx)
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("What do you need help with? Type !help followed by one of the following: config, nsinfo, verification, or admin")
+            await ctx.send(f"What do you need help with? Type {p}help followed by one of the following: config, nsinfo, verification, or admin")
         else:
             print(error)
 
