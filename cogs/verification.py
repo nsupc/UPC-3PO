@@ -69,6 +69,11 @@ class verification(commands.Cog):
             await channel.send("Thanks, you're all set!")
             await ctx.send(f"https://www.nationstates.net/nation={nat} is now a verified identity of {ctx.author}.")
 
+            if ctx.guild.id == 994947158556028939:
+                verified = ctx.guild.get_role(994948692660453510)
+            else:
+                verified = None
+
             mydb = connector()
             mycursor = mydb.cursor()
             mycursor.execute(f"SELECT region FROM guild WHERE serverid = '{ctx.guild.id}'")
@@ -78,21 +83,25 @@ class verification(commands.Cog):
                 return
 
             mycursor.execute(f"SELECT resident FROM guild WHERE serverid = '{ctx.guild.id}'")
-            resident = mycursor.fetchone()[0]
+            resident = ctx.guild.get_role(int(mycursor.fetchone()[0]))
 
             mycursor.execute(f"SELECT visitor FROM guild WHERE serverid = '{ctx.guild.id}'")
-            visitor = mycursor.fetchone()[0]
+            visitor = ctx.guild.get_role(int(mycursor.fetchone()[0]))
 
             region_of_residency = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region").text, "xml").REGION.text.lower().replace(" ", "_")
 
             if region_of_residency in region and resident:
-                role = ctx.guild.get_role(int(resident))
-                await ctx.author.add_roles(role)
+                if visitor and visitor in ctx.author.roles:
+                    await ctx.author.remove_roles(visitor)
+                await ctx.author.add_roles(resident, verified)
+                await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{resident.name}'")
             elif visitor:
-                role = ctx.guild.get_role(int(visitor))
-                await ctx.author.add_roles(role)
-
-            await log(self.bot, ctx.guild.id, f"{ctx.author} was verified as the owner of {nation} and was given the role '{role.name}'")
+                if resident in ctx.author.roles:
+                    await ctx.author.remove_roles(resident)
+                await ctx.author.add_roles(visitor, verified)
+                await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{visitor.name}'")
+            else:
+                return
 
         elif int(r) == 0:
             await channel.send("It looks like something went wrong, please try again.")
