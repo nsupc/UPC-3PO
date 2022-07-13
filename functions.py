@@ -81,4 +81,4 @@ async def log(bot, id, action):
 
     channel = bot.get_channel(data)
 
-    await channel.send(f"<t:{int(time.time())}:F>: {action}")    
+    await channel.send(f"<t:{int(time.time())}:f>: {action}")    
