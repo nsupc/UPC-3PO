@@ -52,18 +52,19 @@ class balder(commands.Cog):
         r = bs(r.text, "xml")
         
         for notice in reversed(r.find_all("NOTICE")):
-            pid = notice.URL.text.split("postid=")[1].split("#")[0]
-            if notice.TYPE.text == "RMB" and pid not in ids:
-                await channel.send(pid)
-                ids.append(pid)
+            if notice.TYPE.text == "RMB":
+                pid = notice.URL.text.split("postid=")[1].split("#")[0]
+                if pid not in ids:
+                    await channel.send(pid)
+                    ids.append(pid)
 
-                post = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?region={notice.URL.text.split("=")[1].split("/")[0]}&q=messages&limit=1&fromid={pid}').text, 'xml')
+                    post = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?region={notice.URL.text.split("=")[1].split("/")[0]}&q=messages&limit=1&fromid={pid}').text, 'xml')
 
-                if "in" in post.MESSAGE.text and post.NATION.text not in watchers:
-                    watchers.append(post.NATION.text)
-                    new.append(f'[nation]{post.NATION.text}[/nation]')
-                elif "out" in post.MESSAGE.text and post.NATION.text in watchers:
-                    watchers.remove(post.NATION.text)
+                    if "in" in post.MESSAGE.text and post.NATION.text not in watchers:
+                        watchers.append(post.NATION.text)
+                        new.append(f'[nation]{post.NATION.text}[/nation]')
+                    elif "out" in post.MESSAGE.text and post.NATION.text in watchers:
+                        watchers.remove(post.NATION.text)
         
         await channel.send(f"Watchers: {watchers}")
         await channel.send(f"New: {new}")
