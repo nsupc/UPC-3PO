@@ -145,16 +145,7 @@ class balder(commands.Cog):
         #All Balder nations
         br = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?region=balder&q=nations").text, 'xml').NATIONS.text.split(":")
 
-        #Creates an array of all Balder WAs by checking all WA nations against all WA nations
-        for x in br:
-            for y in wr:
-                if (x == y):
-                    bwa.append(x)
-
-        #Checks if each Balder WA is endorsing NES, adds them to dispatch array otherwise
-        for x in bwa:
-            if x not in dr:
-                tagged.append(f'[nation]{x}[/nation]')
+        tagged = [f"[nation]{nation}[/nation]" for nation in br if nation in wr and nation not in dr and nation != 'north_east_somerset']
 
         #Totally extra, but creates a string of the dispatch array and puts ", and" before the last one
         if len(tagged) > 1:
