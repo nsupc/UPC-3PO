@@ -111,19 +111,24 @@ class verification(commands.Cog):
             wastatus = r.UNSTATUS.text
 
             if region_of_residency in region:
-                if visitor and visitor in ctx.author.roles:
-                    await ctx.author.remove_roles(visitor)
                 if waresident and wastatus == "WA Member":
+                    if visitor and visitor in ctx.author.roles:
+                        await ctx.author.remove_roles(visitor)
                     await ctx.author.add_roles(waresident, verified)
                     await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{waresident.name}'")
                 elif resident:
+                    if visitor and visitor in ctx.author.roles:
+                        await ctx.author.remove_roles(visitor)
                     await ctx.author.add_roles(resident, verified)
                     await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{resident.name}'")
             elif visitor:
-                if waresident or resident and waresident in ctx.author.roles or resident in ctx.author.roles:
+                if waresident in ctx.author.roles or resident in ctx.author.roles:
                     await ctx.author.remove_roles(waresident, resident)
                 await ctx.author.add_roles(visitor, verified)
                 await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{visitor.name}'")
+            elif verified:
+                await ctx.author.add_roles(verified)
+                await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{verified.name}'")
             else:
                 return
 
