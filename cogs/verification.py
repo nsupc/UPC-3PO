@@ -69,11 +69,6 @@ class verification(commands.Cog):
             await channel.send("Thanks, you're all set!")
             await ctx.send(f"https://www.nationstates.net/nation={nat} is now a verified identity of {ctx.author}.")
 
-            if ctx.guild.id == 994947158556028939:
-                verified = ctx.guild.get_role(994948692660453510)
-            else:
-                verified = None
-
             mydb = connector()
             mycursor = mydb.cursor()
             mycursor.execute(f"SELECT region FROM guild WHERE serverid = '{ctx.guild.id}'")
@@ -82,22 +77,46 @@ class verification(commands.Cog):
             if not region:
                 return
 
+            mycursor.execute(f"SELECT verified FROM guild WHERE serverid = '{ctx.guild.id}'")
+            if mycursor.fetchone() != None:
+                verified = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            else:
+                verified = None
+
+            mycursor.execute(f"SELECT waresident FROM guild WHERE serverid = '{ctx.guild.id}'")
+            if mycursor.fetchone() != None:
+                waresident = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            else:
+                waresident = None
+
             mycursor.execute(f"SELECT resident FROM guild WHERE serverid = '{ctx.guild.id}'")
-            resident = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            if mycursor.fetchone() != None:
+                resident = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            else:
+                resident = None
 
             mycursor.execute(f"SELECT visitor FROM guild WHERE serverid = '{ctx.guild.id}'")
-            visitor = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            if mycursor.fetchone() != None:
+                visitor = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            else:
+                visitor = None
 
-            region_of_residency = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region").text, "xml").REGION.text.lower().replace(" ", "_")
+            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region+wa").text, "xml")
+            region_of_residency = r.REGION.text.lower().replace(" ", "_")
+            wastatus = r.UNSTATUS.text
 
-            if region_of_residency in region and resident:
+            if resident and region_of_residency in region:
                 if visitor and visitor in ctx.author.roles:
                     await ctx.author.remove_roles(visitor)
-                await ctx.author.add_roles(resident, verified)
-                await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{resident.name}'")
+                if waresident and wastatus == "WA Member":
+                    await ctx.author.add_roles(waresident, verified)
+                    await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{waresident.name}'")
+                else:
+                    await ctx.author.add_roles(resident, verified)
+                    await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{resident.name}'")
             elif visitor:
-                if resident in ctx.author.roles:
-                    await ctx.author.remove_roles(resident)
+                if waresident or resident and waresident in ctx.author.roles or resident in ctx.author.roles:
+                    await ctx.author.remove_roles(waresident, resident)
                 await ctx.author.add_roles(visitor, verified)
                 await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{visitor.name}'")
             else:
@@ -105,6 +124,7 @@ class verification(commands.Cog):
 
         elif int(r) == 0:
             await channel.send("It looks like something went wrong, please try again.")
+
 
     @verify.error
     async def verify_error(self, ctx, error):
