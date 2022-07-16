@@ -72,32 +72,37 @@ class verification(commands.Cog):
             mydb = connector()
             mycursor = mydb.cursor()
             mycursor.execute(f"SELECT region FROM guild WHERE serverid = '{ctx.guild.id}'")
-            region = mycursor.fetchone()[0].split(",")
-
-            if not region:
+            returned = mycursor.fetchone()
+            if returned != None:
+                region = returned[0].split(",")
+            else:
                 return
 
             mycursor.execute(f"SELECT verified FROM guild WHERE serverid = '{ctx.guild.id}'")
-            if mycursor.fetchone() != None:
-                verified = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            returned = mycursor.fetchone()
+            if returned != None:
+                verified = ctx.guild.get_role(int(returned[0]))
             else:
                 verified = None
 
             mycursor.execute(f"SELECT waresident FROM guild WHERE serverid = '{ctx.guild.id}'")
-            if mycursor.fetchone() != None:
-                waresident = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            returned = mycursor.fetchone()
+            if returned != None:
+                waresident = ctx.guild.get_role(int(returned[0]))
             else:
                 waresident = None
 
             mycursor.execute(f"SELECT resident FROM guild WHERE serverid = '{ctx.guild.id}'")
-            if mycursor.fetchone() != None:
-                resident = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            returned = mycursor.fetchone()
+            if returned != None:
+                resident = ctx.guild.get_role(int(returned[0]))
             else:
                 resident = None
 
             mycursor.execute(f"SELECT visitor FROM guild WHERE serverid = '{ctx.guild.id}'")
-            if mycursor.fetchone() != None:
-                visitor = ctx.guild.get_role(int(mycursor.fetchone()[0]))
+            returned = mycursor.fetchone()
+            if returned != None:
+                visitor = ctx.guild.get_role(int(returned[0]))
             else:
                 visitor = None
 
@@ -105,13 +110,13 @@ class verification(commands.Cog):
             region_of_residency = r.REGION.text.lower().replace(" ", "_")
             wastatus = r.UNSTATUS.text
 
-            if resident and region_of_residency in region:
+            if region_of_residency in region:
                 if visitor and visitor in ctx.author.roles:
                     await ctx.author.remove_roles(visitor)
                 if waresident and wastatus == "WA Member":
                     await ctx.author.add_roles(waresident, verified)
                     await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{waresident.name}'")
-                else:
+                elif resident:
                     await ctx.author.add_roles(resident, verified)
                     await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{resident.name}'")
             elif visitor:
