@@ -72,37 +72,37 @@ class verification(commands.Cog):
             mydb = connector()
             mycursor = mydb.cursor()
             mycursor.execute(f"SELECT region FROM guild WHERE serverid = '{ctx.guild.id}'")
-            returned = mycursor.fetchone()
+            returned = mycursor.fetchone()[0]
             if returned != None:
-                region = returned[0].split(",")
+                region = returned.split(",")
             else:
                 return
 
             mycursor.execute(f"SELECT verified FROM guild WHERE serverid = '{ctx.guild.id}'")
-            returned = mycursor.fetchone()
+            returned = mycursor.fetchone()[0]
             if returned != None:
-                verified = ctx.guild.get_role(int(returned[0]))
+                verified = ctx.guild.get_role(int(returned))
             else:
                 verified = None
 
             mycursor.execute(f"SELECT waresident FROM guild WHERE serverid = '{ctx.guild.id}'")
-            returned = mycursor.fetchone()
+            returned = mycursor.fetchone()[0]
             if returned != None:
-                waresident = ctx.guild.get_role(int(returned[0]))
+                waresident = ctx.guild.get_role(int(returned))
             else:
                 waresident = None
 
             mycursor.execute(f"SELECT resident FROM guild WHERE serverid = '{ctx.guild.id}'")
-            returned = mycursor.fetchone()
+            returned = mycursor.fetchone()[0]
             if returned != None:
-                resident = ctx.guild.get_role(int(returned[0]))
+                resident = ctx.guild.get_role(int(returned))
             else:
                 resident = None
 
             mycursor.execute(f"SELECT visitor FROM guild WHERE serverid = '{ctx.guild.id}'")
-            returned = mycursor.fetchone()
+            returned = mycursor.fetchone()[0]
             if returned != None:
-                visitor = ctx.guild.get_role(int(returned[0]))
+                visitor = ctx.guild.get_role(int(returned))
             else:
                 visitor = None
 
@@ -122,7 +122,7 @@ class verification(commands.Cog):
                     await ctx.author.add_roles(resident, verified)
                     await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{resident.name}'")
             elif visitor:
-                if waresident in ctx.author.roles or resident in ctx.author.roles:
+                if waresident and waresident in ctx.author.roles or resident and resident in ctx.author.roles:
                     await ctx.author.remove_roles(waresident, resident)
                 await ctx.author.add_roles(visitor, verified)
                 await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{visitor.name}'")
@@ -130,6 +130,7 @@ class verification(commands.Cog):
                 await ctx.author.add_roles(verified)
                 await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{verified.name}'")
             else:
+                await ctx.send("4")
                 return
 
         elif int(r) == 0:
@@ -143,6 +144,7 @@ class verification(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
             return
         else:
+            await ctx.send(error)
             logerror(ctx, error)
 
     @commands.command()
