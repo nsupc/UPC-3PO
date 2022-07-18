@@ -144,7 +144,6 @@ class verification(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
             return
         else:
-            await ctx.send(error)
             logerror(ctx, error)
 
     @commands.command()
