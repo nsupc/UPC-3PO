@@ -81,4 +81,23 @@ async def log(bot, id, action):
 
     channel = bot.get_channel(data)
 
-    await channel.send(f"<t:{int(time.time())}:f>: {action}")    
+    await channel.send(f"<t:{int(time.time())}:f>: {action}")
+
+async def welcome(bot, member):
+    mydb = connector()
+    mycursor = mydb.cursor()
+    mycursor.execute(f"SELECT welcomechannel FROM guild WHERE serverid = '{member.guild.id}'")
+    returned = mycursor.fetchone()
+    if returned == None:
+        return
+    else: 
+        welcome = bot.get_channel(int(returned[0]))
+
+    mycursor.execute(f"SELECT welcome FROM guild WHERE serverid = '{member.guild.id}'")
+    returned = mycursor.fetchone()
+    if returned == None:
+        return
+    else: 
+        text = returned[0].replace('<user>', member.mention)
+
+    await welcome.send(text)
