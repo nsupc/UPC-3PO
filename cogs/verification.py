@@ -136,13 +136,39 @@ class verification(commands.Cog):
         elif int(r) == 0:
             await channel.send("It looks like something went wrong, please try again.")
 
-
     @verify.error
     async def verify_error(self, ctx, error):
+        if "v" not in get_cogs(ctx.guild.id):
+            return
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation to verify.")
-        elif isinstance(error, commands.CheckFailure):
+        else:
+            logerror(ctx, error)
+
+    @commands.command()
+    @isLoaded()
+    async def unverify(self, ctx, *, nation):
+        mydb = connector()
+        mycursor = mydb.cursor()
+
+        nat = nation.lower().replace(" ", "_")
+        mycursor.execute(f"SELECT nation FROM reg WHERE userid = '{ctx.author.id}' AND serverid = '{ctx.guild.id}' AND nation = '{nat}'")
+        returned = mycursor.fetchone()
+
+        if returned == None:
+            await ctx.send("You haven't verified that nation in this server.")
             return
+        else:
+            mycursor.execute(f"DELETE FROM reg WHERE userid = '{ctx.author.id}' AND serverid = '{ctx.guild.id}' AND nation = '{nat}'")
+            mydb.commit()
+            await ctx.send("Done.")
+
+    @unverify.error
+    async def unverify_error(self, ctx, error):
+        if "v" not in get_cogs(ctx.guild.id):
+            return
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Please select a nation.")
         else:
             logerror(ctx, error)
 
@@ -173,12 +199,12 @@ class verification(commands.Cog):
 
     @id.error
     async def id_error(self, ctx, error):
+        if "v" not in get_cogs(ctx.guild.id):
+            return
         if isinstance(error, commands.MemberNotFound):
             await ctx.send("Sorry, I can't find that user.")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a user.")
-        elif isinstance(error, commands.CheckFailure):
-            return
         else:
             logerror(ctx, error)
 
