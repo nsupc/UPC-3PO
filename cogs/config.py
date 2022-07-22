@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Select
 
-from functions import connector,log,get_cogs,logerror,get_prefix
+from functions import connector,log,welcome,get_cogs,logerror,get_prefix
 
 '''
 Add config command, shows which cogs are loaded in a server, prefix, log & welcome channels, etc etc
@@ -16,18 +16,22 @@ class config(commands.Cog):
     #Events
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        mydb = connector()
-        mycursor = mydb.cursor()
-        mycursor.execute(f"SELECT welcomechannel, welcome FROM guild WHERE serverid = '{member.guild.id}' LIMIT 1")
-        x = mycursor.fetchone()
-        welcome = self.bot.get_channel(int(x[0]))
-        await welcome.send(f"{x[1].replace('<user>', member.mention)}")
-
+        await welcome(self.bot, member)
         await log(self.bot, member.guild.id, f"<@!{member.id}> joined the server.")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         await log(self.bot, member.guild.id, f"<@!{member.id}> left the server.")
+
+        '''
+        mydb = connector()
+        mycursor = mydb.cursor()
+        mycursor.execute(f"DELETE FROM reg WHERE serverid = '{member.guild.id}' AND userid = '{member.id}'")
+        mydb.commit()
+        '''
+        #The above code will clear a user's verified identities when they leave a server. I think this makes sense in a lot of cases, but am concerned 
+        #that it may pose a problem for moderation -- if the user needs to be banned from Discord quickly, and if you can't access the record of their
+        #nation to ban later if necessary, that is an issue. I will think about this later.
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -435,7 +439,7 @@ class config(commands.Cog):
         if(msg.lower() == "config"):
             embed = discord.Embed(title="Config", colour=color)
             embed.add_field(name="changeprefix",value=f"Changes the bot's server command prefix.\nUsage: {p}changeprefix [prefix]", inline=False)
-            embed.add_field(name="welcome",value="Designates a welcome channel and sets the server welcome message.", inline=False)
+            embed.add_field(name="welcome",value="Opens the configuration menu for welcoming new members.", inline=False)
             embed.add_field(name="log",value=f"Designates a channel to record the bot's server usage history.\nUsage: {p}log [channel id]", inline=False)
             embed.add_field(name="addcog",value=f"Enables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
             embed.add_field(name="remcog",value=f"Disables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
@@ -462,6 +466,7 @@ class config(commands.Cog):
         elif(msg.lower() == "verification"):
             embed = discord.Embed(title="Verification", colour=color)
             embed.add_field(name="verify",value=f"Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: {p}verify [nation]", inline=False)
+            embed.add_field(name="unverify",value=f"Disassociates a previously verified identity from a Discord user.\nUsage: {p}unverify [nation]", inline=False)
             embed.add_field(name="id",value=f"Displays NationStates nations associated with a particular Discord user.\nUsage: {p}id [user]", inline=False)
             await ctx.send(embed=embed)
 
