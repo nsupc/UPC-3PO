@@ -3,6 +3,7 @@ from datetime import date
 import discord
 from discord.ext import commands,tasks
 import time
+import random
 
 from functions import api_call,logerror
 
@@ -13,7 +14,7 @@ class balder(commands.Cog):
     #Checks
     def isLoaded():
         async def predicate(ctx):
-            r = ["917491744109649975", "615577947612381458"]
+            r = ["917491744109649975", "615577947612381458", "949447412932554792"]
             id = str(ctx.channel.id)
             return id in r
         return commands.check(predicate)
@@ -134,7 +135,6 @@ class balder(commands.Cog):
     @isLoaded()
     async def bnne(self, ctx):
         dispatch = "Greetings! If you are included in this dispatch, then we would like to request that you [u][b]consider endorsing Delegate [nation]North East Somerset[/nation][/b][/u].\n\n[u][b]Endorsing Delegate [nation]North East Somerset[/nation][/b][/u] is important for safeguarding our region against external threats and ensuring the continuation of our government.\n\nAdditionally, if you [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u], your nation gets one step closer to becoming a [url=/page=dispatch/id=1009325]Housecarl of Balder[/url]. You can use this link to learn more about the benefits for the region [i]and[/i] your nation that come from being a Housecarl.\n\nThank you in advance for choosing to [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u]!\n\n[spoiler=Nations currently not endorsing Delegate [nation]North East Somerset[/nation]]{}[/spoiler]\n\n[background-block=#304a80][align=center][color=#304a80]*[/color]\n[img]http://i.imgur.com/05eozti.png?1[/img]\n[b][url=/region=balder][color=#ffffff]Region[/color][/url] [color=#ffffff]🞜[/color] [url=http://balder.boards.net][color=#ffffff]Forum[/color][/url] [color=#ffffff]🞜[/color] [url=https://discord.gg/E3hr3bX][color=#ffffff]Discord[/color][/url][/b]\n[color=#304a80]*[/color][/align][/background-block]"
-        bwa = []
         tagged = []
         today = date.today()
 
@@ -193,7 +193,72 @@ class balder(commands.Cog):
             did = DISPATCH['id']
 
         await ctx.send(f"NNE posted: https://www.nationstates.net/page=dispatch/id={did}")
-        
+
+    @commands.command()
+    @isLoaded()
+    async def bwa(self, ctx):
+        dispatch = "Greetings! If you are included in this dispatch, then we would like to request that you [u][b]consider joining the World Assembly and endorsing Delegate [nation]North East Somerset[/nation][/b][/u].\n\n[u][b]Endorsing Delegate [nation]North East Somerset[/nation][/b][/u] is important for safeguarding our region against external threats and ensuring the continuation of our government. More information about [region]Balder[/region]'s World Assembly Expedition can be found [url=https://www.nationstates.net/page=dispatch/id=1009320]here[/url]. \n\nAdditionally, if you [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u], your nation gets one step closer to becoming a [url=/page=dispatch/id=1009325]Housecarl of Balder[/url]. You can use this link to learn more about the benefits for the region [i]and[/i] your nation that come from being a Housecarl.\n\nThank you in advance for choosing to [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u]!\n\n[spoiler=Nations currently not endorsing Delegate [nation]North East Somerset[/nation]]@@NATIONS@@[/spoiler]\n\n[background-block=#304a80][align=center][color=#304a80]*[/color]\n[img]http://i.imgur.com/05eozti.png?1[/img]\n[b][url=/region=balder][color=#ffffff]Region[/color][/url] [color=#ffffff]?[/color] [url=http://balder.boards.net][color=#ffffff]Forum[/color][/url] [color=#ffffff]?[/color] [url=https://discord.gg/E3hr3bX][color=#ffffff]Discord[/color][/url][/b]\n[color=#304a80]*[/color][/align][/background-block]"
+        today = date.today()
+
+        #All WAs
+        wr = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=members").text, 'xml').MEMBERS.text.split(",")
+        #All Balder nations
+        br = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?region=balder&q=nations").text, 'xml').NATIONS.text.split(":")
+
+        non_members = [nation for nation in br if nation not in wr]
+        tagged = [f"[nation]{nation}[/nation]" for nation in random.sample(non_members, 250)]
+
+        if len(tagged) > 1:
+            post = ", ".join(tagged[:-1]) + ', and ' + tagged[-1]
+        else:
+            post = tagged[0]
+        #@@NATIONS@@
+
+        data = {
+            'nation': 'The Balder World Assembly Office',
+            'c': 'dispatch',
+            'dispatch': 'add',
+            'title': 'Join the World Assembly! ' + today.strftime("%B %d, %Y"),
+            'text': dispatch.replace("@@NATIONS@@", post),
+            'category': '3',
+            'subcategory': '385',
+            'mode': 'prepare'
+        }
+
+        #Prepare API call
+        p = api_call(2, "https://www.nationstates.net/cgi-bin/api.cgi", data)
+
+        pin = p.headers["X-Pin"]
+        bsp = bs(p.text, 'xml')
+        token = bsp.find_all("SUCCESS")
+
+        data = {
+            'nation': 'The Balder World Assembly Office',
+            'c': 'dispatch',
+            'dispatch': 'add',
+            'title': 'Join the World Assembly! ' + today.strftime("%B %d, %Y"),
+            'text': dispatch.replace("@@NATIONS@@", post),
+            'category': '3',
+            'subcategory': '385',
+            'mode': 'execute',
+            'token': token
+        }
+
+        #Execute API call. I don't actaully know what would happen right now if this failed, may want to look into that
+        api_call(2, "https://www.nationstates.net/cgi-bin/api.cgi", data, pin)
+
+        #Grabs the link to the newly created dispatch (unless something goes wrong in the previous step? idk)
+        #and posts it in Discord 
+        dis = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?nation=the_balder_world_assembly_office&q=dispatchlist").text, 'xml')
+        for DISPATCH in dis.find_all("DISPATCH"):
+            did = DISPATCH['id']
+
+        await ctx.send(f"Call to Action posted: https://www.nationstates.net/page=dispatch/id={did}")
+
+    @bwa.error
+    async def bwa_error(self, ctx, error):
+        await ctx.send(error)
+
     @commands.command()
     @isLoaded()
     async def brec(self, ctx, *, content):
