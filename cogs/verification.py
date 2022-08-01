@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup as bs
 import discord
 from discord.ext import commands
+from discord.ui import Button, View
 from dotenv import load_dotenv
 import time
 import math
@@ -39,9 +40,9 @@ class verification(commands.Cog):
             for name in myresult:        
                 ids.append(name[0])
 
-            if nat in ids:
-                await ctx.send(f"You've already verified {nation} in this server.")
-                return
+            #if nat in ids:
+            #    await ctx.send(f"You've already verified {nation} in this server.")
+            #    return
 
         def check(m):
             return m.author == ctx.author and m.channel == channel
@@ -61,13 +62,14 @@ class verification(commands.Cog):
         r = api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?a=verify&nation={nat}&checksum={code}').text
 
         if int(r) == 1:
-            sql = "INSERT INTO reg (userid, serverid, nation, timestamp) VALUES (%s, %s, %s, %s)"
-            val = (ctx.author.id, ctx.guild.id, nat, time.time())
-            mycursor.execute(sql,val)
-            mydb.commit()
+            if nat not in ids:
+                sql = "INSERT INTO reg (userid, serverid, nation, timestamp) VALUES (%s, %s, %s, %s)"
+                val = (ctx.author.id, ctx.guild.id, nat, time.time())
+                mycursor.execute(sql,val)
+                mydb.commit()
 
-            await channel.send("Thanks, you're all set!")
             await ctx.send(f"https://www.nationstates.net/nation={nat} is now a verified identity of {ctx.author}.")
+            await channel.send("Thanks, you're all set!")
 
             mydb = connector()
             mycursor = mydb.cursor()
@@ -130,7 +132,6 @@ class verification(commands.Cog):
                 await ctx.author.add_roles(verified)
                 await log(self.bot, ctx.guild.id, f"<@!{ctx.author.id}> was verified as the owner of https://www.nationstates.net/nation={nat} and was given the role '{verified.name}'")
             else:
-                await ctx.send("4")
                 return
 
         elif int(r) == 0:
@@ -147,30 +148,68 @@ class verification(commands.Cog):
 
     @commands.command()
     @isLoaded()
+    @commands.has_permissions(kick_members=True)
     async def unverify(self, ctx, *, nation):
         mydb = connector()
         mycursor = mydb.cursor()
 
         nat = nation.lower().replace(" ", "_")
-        mycursor.execute(f"SELECT nation FROM reg WHERE userid = '{ctx.author.id}' AND serverid = '{ctx.guild.id}' AND nation = '{nat}'")
+        mycursor.execute(f"SELECT nation, userid FROM reg WHERE serverid = '{ctx.guild.id}' AND nation = '{nat}'")
         returned = mycursor.fetchone()
 
         if returned == None:
-            await ctx.send("You haven't verified that nation in this server.")
+            await ctx.send("That nation hasn't been verified in this server.")
             return
         else:
-            mycursor.execute(f"DELETE FROM reg WHERE userid = '{ctx.author.id}' AND serverid = '{ctx.guild.id}' AND nation = '{nat}'")
-            mydb.commit()
-            await ctx.send("Done.")
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=f"Are you sure you want to unverify this nation?", color=color)
+            embed.add_field(name="User:", value=f"User: <@!{returned[1]}>")
+            embed.add_field(name="Nation:", value=f"https://www.nationstates.net/nation={returned[0]}")
+
+            confirm = Button(label="✓", style=discord.ButtonStyle.green)
+            cancel = Button(label="X", style=discord.ButtonStyle.red)
+
+            async def confirm_callback(interaction):
+                if interaction.user != ctx.message.author:
+                    return
+
+                mydb = connector()
+                mycursor = mydb.cursor()
+
+                mycursor.execute(f"DELETE FROM reg WHERE serverid = '{ctx.guild.id}' AND userid = '{returned[1]}' AND nation = '{returned[0]}'")
+                mydb.commit()
+
+                embed.add_field(name="Status:", value="Deleted", inline=False)
+                await interaction.response.edit_message(embed=embed, view=None)
+                await interaction.response.send_message("Done")
+            confirm.callback = confirm_callback
+
+            async def cancel_callback(interaction):
+                if interaction.user != ctx.message.author:
+                    return
+
+                embed.add_field(name="Status:", value="Cancelled", inline=False)
+                await interaction.response.edit_message(embed=embed, view=None)
+                await interaction.response.send_message("Cancelled")
+            cancel.callback = cancel_callback           
+
+            view = View()
+            view.add_item(confirm)
+            view.add_item(cancel)
+
+            await ctx.send(embed=embed, view=view)
 
     @unverify.error
     async def unverify_error(self, ctx, error):
         if "v" not in get_cogs(ctx.guild.id):
             return
-        if isinstance(error, commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("You don't have permission to perform that command.")
+        elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please select a nation.")
         else:
-            logerror(ctx, error)
+            await ctx.send(error)
+            #logerror(ctx, error)
 
     @commands.command()
     @isLoaded()
