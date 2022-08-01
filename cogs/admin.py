@@ -20,7 +20,7 @@ class admin(commands.Cog):
     @commands.command()
     @isLoaded()
     @commands.has_permissions(manage_roles=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     async def addrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
         await member.add_roles(role)
         await ctx.send(f"{member.name} has been added to {role}.")
@@ -48,7 +48,7 @@ class admin(commands.Cog):
     @commands.command()
     @isLoaded()
     @commands.has_permissions(manage_roles=True)
-    @commands.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
     async def remrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
         await member.remove_roles(role)
         await ctx.send(f"{member.name} has been removed from {role}.")
