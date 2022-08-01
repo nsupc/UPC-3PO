@@ -163,7 +163,7 @@ class verification(commands.Cog):
         else:
             color = int("2d0001", 16)
             embed=discord.Embed(title=f"Are you sure you want to unverify this nation?", color=color)
-            embed.add_field(name="User:", value=f"User: <@!{returned[1]}>")
+            embed.add_field(name="User:", value=f"<@!{returned[1]}>")
             embed.add_field(name="Nation:", value=f"https://www.nationstates.net/nation={returned[0]}")
 
             confirm = Button(label="✓", style=discord.ButtonStyle.green)
@@ -181,7 +181,6 @@ class verification(commands.Cog):
 
                 embed.add_field(name="Status:", value="Deleted", inline=False)
                 await interaction.response.edit_message(embed=embed, view=None)
-                await interaction.response.send_message("Done")
             confirm.callback = confirm_callback
 
             async def cancel_callback(interaction):
@@ -190,7 +189,6 @@ class verification(commands.Cog):
 
                 embed.add_field(name="Status:", value="Cancelled", inline=False)
                 await interaction.response.edit_message(embed=embed, view=None)
-                await interaction.response.send_message("Cancelled")
             cancel.callback = cancel_callback           
 
             view = View()
