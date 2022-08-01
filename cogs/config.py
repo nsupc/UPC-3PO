@@ -432,63 +432,83 @@ class config(commands.Cog):
             await ctx.send("Sorry, I can't do that right now.")
 
     @commands.command()
-    async def help(self, ctx, *, msg):
+    async def help(self, ctx):
         p = get_prefix(self, ctx)
         color = int("2d0001", 16)
 
-        if(msg.lower() == "config"):
-            embed = discord.Embed(title="Config", colour=color)
-            embed.add_field(name="changeprefix",value=f"Changes the bot's server command prefix.\nUsage: {p}changeprefix [prefix]", inline=False)
-            embed.add_field(name="welcome",value="Opens the configuration menu for welcoming new members.", inline=False)
-            embed.add_field(name="log",value=f"Designates a channel to record the bot's server usage history.\nUsage: {p}log [channel id]", inline=False)
-            embed.add_field(name="addcog",value=f"Enables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
-            embed.add_field(name="remcog",value=f"Disables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
-            embed.add_field(name="help",value="Displays information about the commands that are loaded in this server.", inline=False)
-            embed.add_field(name="feedback",value="Sends upc feedback about the bot.", inline=False)
-            embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
-            await ctx.send(embed=embed)
+        config_embed = discord.Embed(title="Config", colour=color)
+        config_embed.add_field(name="changeprefix",value=f"Changes the bot's server command prefix.\nUsage: {p}changeprefix [prefix]", inline=False)
+        config_embed.add_field(name="welcome",value="Opens the configuration menu for welcoming new members.", inline=False)
+        config_embed.add_field(name="log",value=f"Designates a channel to record the bot's server usage history.\nUsage: {p}log [channel id]", inline=False)
+        config_embed.add_field(name="addcog",value=f"Enables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
+        config_embed.add_field(name="remcog",value=f"Disables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
+        config_embed.add_field(name="help",value="Displays information about the commands that are loaded in this server.", inline=False)
+        config_embed.add_field(name="feedback",value="Sends upc feedback about the bot.", inline=False)
+        config_embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
 
-        elif(msg.lower() == "nsinfo"):
-            embed = discord.Embed(title="NSInfo", colour=color)
-            embed.add_field(name="nation",value=f"Displays information about a NationStates nation.\nUsage: {p}nation [nation]", inline=False)
-            embed.add_field(name="endotart",value=f"Outputs an HTML sheet containing links to every nation in a region not being endorsed by a nation, as listed in the region's Daily Dump.\nUsage: {p}endotart [nation]", inline=False)
-            embed.add_field(name="nne",value=f"Outputs an HTML sheet containing links to every nation in a region not endorsing a nation, as listed in the region's Daily Dump.\nUsage: {p}nne [nation]", inline=False)
-            embed.add_field(name="s1",value=f"Displays information about the Season 1 Trading Card of a nation.\nUsage: {p}s1 [nation]", inline=False)
-            embed.add_field(name="s2",value=f"Displays information about the Season 2 Trading Card of a nation.\nUsage: {p}s2 [nation]", inline=False)
-            embed.add_field(name="deck",value=f"Displays information about the deck of a nation.\nUsage: {p}deck [nation]", inline=False)
-            embed.add_field(name="market",value=f"Displays information about the trading card market.\nUsage: {p}market", inline=False)
-            embed.add_field(name="region",value=f"Displays information about a NationStates region.\nUsage: {p}region [region]", inline=False)
-            embed.add_field(name="activity",value=f"Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: {p}activity [region]", inline=False)
-            embed.add_field(name="ga",value=f"Displays information about the at vote General Assembly resolution or a specified passed resolution.\nUsage: {p}ga [optional resolution id]", inline=False)
-            embed.add_field(name="sc",value=f"Displays information about the at vote Security Council resolution or a specified passed resolution.\nUsage: {p}sc [optional resolution id]", inline=False)
-            await ctx.send(embed=embed)
+        admin_embed = discord.Embed(title="Admin Tools", colour=color)
+        admin_embed.add_field(name="kick",value=f"Kicks a user from the server.\nUsage: {p}kick [user] [optional reason]", inline=False)
+        admin_embed.add_field(name="ban",value=f"Bans a user from the server.\nUsage: {p}ban [user] [optional reason]", inline=False)
+        admin_embed.add_field(name="unban",value=f"Unbans a user from the server.\nUsage: {p}unban [user]", inline=False)
+        admin_embed.add_field(name="addrole",value=f"Adds a role to a user.\nUsage: {p}addrole [user] '[role]'", inline=False)
+        admin_embed.add_field(name="remrole",value=f"Removes a role from a user.\nUsage: {p}remrole [user] '[role]'", inline=False)
 
-        elif(msg.lower() == "verification"):
-            embed = discord.Embed(title="Verification", colour=color)
-            embed.add_field(name="verify",value=f"Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: {p}verify [nation]", inline=False)
-            embed.add_field(name="unverify",value=f"Disassociates a previously verified identity from a Discord user.\nUsage: {p}unverify [nation]", inline=False)
-            embed.add_field(name="id",value=f"Displays NationStates nations associated with a particular Discord user.\nUsage: {p}id [user]", inline=False)
-            await ctx.send(embed=embed)
+        nsinfo_embed = discord.Embed(title="NSInfo", colour=color)
+        nsinfo_embed.add_field(name="nation",value=f"Displays information about a NationStates nation.\nUsage: {p}nation [nation]", inline=False)
+        nsinfo_embed.add_field(name="endotart",value=f"Outputs an HTML sheet containing links to every nation in a region not being endorsed by a nation, as listed in the region's Daily Dump.\nUsage: {p}endotart [nation]", inline=False)
+        nsinfo_embed.add_field(name="nne",value=f"Outputs an HTML sheet containing links to every nation in a region not endorsing a nation, as listed in the region's Daily Dump.\nUsage: {p}nne [nation]", inline=False)
+        nsinfo_embed.add_field(name="s1",value=f"Displays information about the Season 1 Trading Card of a nation.\nUsage: {p}s1 [nation]", inline=False)
+        nsinfo_embed.add_field(name="s2",value=f"Displays information about the Season 2 Trading Card of a nation.\nUsage: {p}s2 [nation]", inline=False)
+        nsinfo_embed.add_field(name="deck",value=f"Displays information about the deck of a nation.\nUsage: {p}deck [nation]", inline=False)
+        nsinfo_embed.add_field(name="market",value=f"Displays information about the trading card market.\nUsage: {p}market", inline=False)
+        nsinfo_embed.add_field(name="region",value=f"Displays information about a NationStates region.\nUsage: {p}region [region]", inline=False)
+        nsinfo_embed.add_field(name="activity",value=f"Displays a graph showing the most recent login of every nation in a region, as listed in the region's Daily Dump.\nUsage: {p}activity [region]", inline=False)
+        nsinfo_embed.add_field(name="ga",value=f"Displays information about the at vote General Assembly resolution or a specified passed resolution.\nUsage: {p}ga [optional resolution id]", inline=False)
+        nsinfo_embed.add_field(name="sc",value=f"Displays information about the at vote Security Council resolution or a specified passed resolution.\nUsage: {p}sc [optional resolution id]", inline=False)
 
-        elif(msg.lower() == "admin"):
-            embed = discord.Embed(title="Admin Tools", colour=color)
-            embed.add_field(name="kick",value=f"Kicks a user from the server.\nUsage: {p}kick [user] [optional reason]", inline=False)
-            embed.add_field(name="ban",value=f"Bans a user from the server.\nUsage: {p}ban [user] [optional reason]", inline=False)
-            embed.add_field(name="unban",value=f"Unbans a user from the server.\nUsage: {p}unban [user]", inline=False)
-            embed.add_field(name="addrole",value=f"Adds a role to a user.\nUsage: {p}addrole [user] '[role]'", inline=False)
-            embed.add_field(name="remrole",value=f"Removes a role from a user.\nUsage: {p}remrole [user] '[role]'", inline=False)
-            await ctx.send(embed=embed)
+        verification_embed = discord.Embed(title="Verification", colour=color)
+        verification_embed.add_field(name="verify",value=f"Uses the NationStates Verification API to associate nation names with Discord users.\nUsage: {p}verify [nation]", inline=False)
+        verification_embed.add_field(name="unverify",value=f"Disassociates a previously verified identity from a Discord user.\nUsage: {p}unverify [nation]", inline=False)
+        verification_embed.add_field(name="id",value=f"Displays NationStates nations associated with a particular Discord user.\nUsage: {p}id [user]", inline=False)
 
-        else:
-            await ctx.send("Sorry, that isn't a command set. The options are Config, NSInfo, Verification, and Admin")
+        select = Select(
+            placeholder = "Please choose an option.",
+            options=[
+            discord.SelectOption(label="Admin", value="admin"),
+            discord.SelectOption(label="Config", value="config"),
+            discord.SelectOption(label="NSInfo", value="nsinfo"),
+            discord.SelectOption(label="Verification", value="verification"),
+            discord.SelectOption(label="Exit Help", value="exit"),
+            ]
+        )
+
+        async def select_callback(interaction):
+            if interaction.user != ctx.message.author:
+                return
+
+            response = select.values[0]
+            if response == "exit":
+                await interaction.response.edit_message(view=None)
+                return
+            elif response == "admin":
+                await interaction.response.edit_message(embed=admin_embed, view=view)
+            elif response == "config":
+                await interaction.response.edit_message(embed=config_embed, view=view)
+            elif response == "nsinfo":
+                await interaction.response.edit_message(embed=nsinfo_embed, view=view)
+            elif response == "verification":
+                await interaction.response.edit_message(embed=verification_embed, view=view)
+
+        select.callback = select_callback
+        view = View()
+        view.add_item(select)
+
+        await ctx.send(embed=config_embed, view=view)
 
     @help.error
     async def help_error(self, ctx, error):
-        p = get_prefix(self, ctx)
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f"What do you need help with? Type {p}help followed by one of the following: config, nsinfo, verification, or admin")
-        else:
-            print(error)
+        await ctx.send(error)
+
 
 async def setup(bot):
     await bot.add_cog(config(bot))
