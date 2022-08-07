@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ui import View, Select
+from discord.ui import View, Select, Button, TextInput
 
 from functions import connector,log,welcome,get_cogs,logerror,get_prefix
 
@@ -65,6 +65,7 @@ class config(commands.Cog):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Please include your feedback.")
 
+    '''
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def config(self, ctx):
@@ -102,6 +103,7 @@ class config(commands.Cog):
     async def config_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("You do not have permission to perform that command.")
+    '''
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -124,32 +126,14 @@ class config(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def log(self, ctx, *, id):
-        mydb = connector()
-        mycursor = mydb.cursor()
-        mycursor.execute(f'UPDATE guild SET logchannel = "{id}" WHERE serverid = "{ctx.guild.id}"')
-        mydb.commit()
-
-        await log(self.bot, ctx.guild.id, f"This is now the log channel")
-
-    @log.error
-    async def log_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a channel.")
-        else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def welcome(self, ctx):
+    async def config(self, ctx):
 
         select = Select(
             placeholder = "Please choose an option.",
             options=[
-            discord.SelectOption(label="Welcome Channel", value="channel"),
+            discord.SelectOption(label="Cogs", value="cogs"),
+            discord.SelectOption(label="Log Channel", value="log"),
+            discord.SelectOption(label="Welcome Channel", value="welcome"),
             discord.SelectOption(label="Welcome Message", value="message"),
             discord.SelectOption(label="Region", value="region"),
             discord.SelectOption(label="WA Resident Role", value="waresident"),
@@ -169,38 +153,194 @@ class config(commands.Cog):
                 await interaction.response.edit_message(content="Shutting down setup.", view=None)
                 return
                 
-            elif response == "channel":
-                await interaction.response.send_message("What is the channel ID for your welcome channel?")
+            elif response == "cogs":
+                cogSelect=Select(
+                    min_values=1,
+                    max_values=3,
+                    placeholder = "Select which cogs should be loaded",
+                    options = [
+                        discord.SelectOption(label="Admin", value="a"),
+                        discord.SelectOption(label="NSInfo", value="n"),
+                        discord.SelectOption(label="Verification", value="v"),
+                        discord.SelectOption(label="Cancel", value="cancel"),
+                    ],
+                )
 
-                def check(m):
-                    return m.author == ctx.author and m.channel == ctx.channel
+                async def cogSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
+                    elif "cancel" in cogSelect.values:
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
+                    else:
+                        cogs = "".join(cogSelect.values)
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET cogs = "{cogs}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await interaction.response.edit_message(content="Done.", view=None) 
+                    
+                cogSelect.callback = cogSelect_callback
+                cogView = View()
+                cogView.add_item(cogSelect)
+                await interaction.response.send_message(view=cogView)
 
-                try:
-                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                except:
-                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
-                
-                try:
-                    welcomeid = int(msg.content)
-                except:
-                    await ctx.send("Channel IDs should be numbers.")
+            elif response == "log":
+                logSelect = Select(
+                    placeholder = "Please select a log channel",
+                    options = []
+                )
+                for channel in ctx.guild.text_channels[:20]:
+                    logSelect.options.append(discord.SelectOption(label=f"#{channel.name}", value=f"{channel.id}"))
 
-                welcome = self.bot.get_channel(welcomeid)
+                if len(ctx.guild.text_channels) > 20:
+                    logSelect.options.append(discord.SelectOption(label="My channel isn't listed", value="custom"))
 
-                channels = []
+                logSelect.options.append(discord.SelectOption(label="Delete Log Channel", value="delete"))
+                logSelect.options.append(discord.SelectOption(label="Cancel", value="cancel"))
 
-                for channel in ctx.guild.text_channels:
-                    channels.append(channel)
+                async def logSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
 
-                if welcome not in channels:
-                    await ctx.send("The welcome channel must be a text channel in this server.")
-                    return
+                    logResponse = logSelect.values[0]
 
-                mydb = connector()
-                mycursor = mydb.cursor()
-                mycursor.execute(f'UPDATE guild SET welcomechannel = "{welcomeid}" WHERE serverid = "{ctx.guild.id}"')
-                mydb.commit()
-                await ctx.send(f"{welcome.mention} has been set as the welcome channel.")
+                    if logResponse == "cancel":
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
+
+                    elif logResponse == "delete":
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET logchannel = null WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await interaction.response.edit_message(content="Done.", view=None)                      
+
+                    elif logResponse == "custom":
+                        await interaction.response.edit_message(content="What is the id of your log channel?", view=None)
+
+                        def check(m):
+                            return m.author == ctx.author and m.channel == ctx.channel
+
+                        try:
+                            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        except:
+                            await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+                        try:
+                            logid = int(msg.content)
+                        except:
+                            await ctx.send("Channel IDs should be numbers.")
+
+                        log = self.bot.get_channel(logid)
+
+                        channels = []
+
+                        for channel in ctx.guild.text_channels:
+                            channels.append(channel)
+
+                        if log not in channels:
+                            await ctx.send("The log channel must be a text channel in this server.")
+                            return
+
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET logchannel = "{logid}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await ctx.send(f"{log.mention} has been set as the welcome channel.")
+
+                    else:
+                        log = self.bot.get_channel(int(logResponse))
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET logchannel = "{logResponse}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()                    
+                        await interaction.response.edit_message(content=f"{log.mention} has been set as the log channel.", view=None)
+
+                logSelect.callback = logSelect_callback
+                logView = View()
+                logView.add_item(logSelect)
+
+                await interaction.response.send_message(view=logView)
+
+            elif response == "welcome":
+                welcomeSelect = Select(
+                    placeholder = "Please select a welcome channel",
+                    options = []
+                )
+                for channel in ctx.guild.text_channels[:20]:
+                    welcomeSelect.options.append(discord.SelectOption(label=f"#{channel.name}", value=f"{channel.id}"))
+
+                if len(ctx.guild.text_channels) > 20:
+                    welcomeSelect.options.append(discord.SelectOption(label="My channel isn't listed", value="custom"))
+
+                welcomeSelect.options.append(discord.SelectOption(label="Delete Welcome Channel", value="delete"))
+                welcomeSelect.options.append(discord.SelectOption(label="Cancel", value="cancel"))
+
+                async def welcomeSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
+
+                    welcomeResponse = welcomeSelect.values[0]
+
+                    if welcomeResponse == "cancel":
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
+
+                    elif welcomeResponse == "delete":
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET welcomechannel = null WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await interaction.response.edit_message(content="Done.", view=None)                      
+
+                    elif welcomeResponse == "custom":
+                        await interaction.response.edit_message(content="What is the id of your welcome channel?", view=None)
+
+                        def check(m):
+                            return m.author == ctx.author and m.channel == ctx.channel
+
+                        try:
+                            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        except:
+                            await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+                        try:
+                            welcomeid = int(msg.content)
+                        except:
+                            await ctx.send("Channel IDs should be numbers.")
+
+                        welcome = self.bot.get_channel(welcomeid)
+
+                        channels = []
+
+                        for channel in ctx.guild.text_channels:
+                            channels.append(channel)
+
+                        if welcome not in channels:
+                            await ctx.send("The welcome channel must be a text channel in this server.")
+                            return
+
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET welcomechannel = "{welcomeid}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await ctx.send(f"{welcome.mention} has been set as the welcome channel.")
+
+                    else:
+                        welcome = self.bot.get_channel(int(welcomeResponse))
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET welcomechannel = "{welcomeResponse}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()                    
+                        await interaction.response.edit_message(content=f"{welcome.mention} has been set as the welcome channel.", view=None)
+
+                welcomeSelect.callback = welcomeSelect_callback
+                welcomeView = View()
+                welcomeView.add_item(welcomeSelect)
+
+                await interaction.response.send_message(view=welcomeView)
+
 
             elif response == "message":
                 await interaction.response.send_message("What would you like to use as your welcome message? Write ``<user>`` where you want me to ping the new member.")
@@ -228,6 +368,7 @@ class config(commands.Cog):
                 except:
                     await ctx.send("Sorry, it looks like something has gone wrong.")
 
+                    
             elif response == "region":
                 await interaction.response.send_message("What gameside region is this server for?")
 
@@ -246,6 +387,7 @@ class config(commands.Cog):
                 mycursor.execute(f'UPDATE guild SET region = "{region}" WHERE serverid = "{ctx.guild.id}"')
                 mydb.commit()
                 await ctx.send(f"'{region}' has been set as this server's region.")
+
 
             elif response == "waresident":
                 await interaction.response.send_message("What is the role ID for your WA resident role?")
@@ -278,6 +420,7 @@ class config(commands.Cog):
                 mydb.commit()
                 await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the WA resident role.")
 
+
             elif response == "resident":
                 await interaction.response.send_message("What is the role ID for your resident role?")
 
@@ -309,6 +452,7 @@ class config(commands.Cog):
                 mydb.commit()
                 await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the resident role.")
 
+
             elif response == "visitor":
                 await interaction.response.send_message("What is the role ID for your visitor role?")
 
@@ -339,6 +483,7 @@ class config(commands.Cog):
                 mycursor.execute(f'UPDATE guild SET visitor = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
                 mydb.commit()
                 await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the visitor role.")
+
 
             elif response == "verified":
                 await interaction.response.send_message("What is the role ID for your verified user role?")
@@ -377,59 +522,9 @@ class config(commands.Cog):
 
         await ctx.send(view=view)
 
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def addcog(self, ctx, cog):
-        r = get_cogs(ctx.guild.id)
-        c = cog[0]
-        if c not in "anv":
-            await ctx.send("That is not a valid option.")
-            return
-        elif c in r:
-            await ctx.send("Cog already loaded.")
-        else: 
-            mydb = connector()
-            mycursor = mydb.cursor()
-            mycursor.execute(f'UPDATE guild SET cogs = "{r + c}" WHERE serverid = "{ctx.guild.id}"')
-            mydb.commit()
-            await ctx.send("Cog loaded.")
-
-    @addcog.error
-    async def addcog_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
-        else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def remcog(self, ctx, cog):
-        r = get_cogs(ctx.guild.id)
-        c = cog[0]
-        if c not in "anv":
-            await ctx.send("That is not a valid option.")
-            return
-        elif c not in r:
-            await ctx.send("Cog already unloaded.")
-        else: 
-            mydb = connector()
-            mycursor = mydb.cursor()
-            mycursor.execute(f'UPDATE guild SET cogs = "{r.replace(c, "")}" WHERE serverid = "{ctx.guild.id}"')
-            mydb.commit()
-            await ctx.send("Cog unloaded.")
-
-    @remcog.error
-    async def remcog_error(self, ctx, error):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a cog.\nAdmin: a, NSinfo: n, Verify: v")
-        else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
+    @config.error
+    async def config_error(self, ctx, error):
+        print(error)
 
     @commands.command()
     async def help(self, ctx):
@@ -438,11 +533,8 @@ class config(commands.Cog):
 
         config_embed = discord.Embed(title="Config", colour=color)
         config_embed.add_field(name="changeprefix",value=f"Changes the bot's server command prefix.\nUsage: {p}changeprefix [prefix]", inline=False)
-        config_embed.add_field(name="welcome",value="Opens the configuration menu for welcoming new members.", inline=False)
-        config_embed.add_field(name="log",value=f"Designates a channel to record the bot's server usage history.\nUsage: {p}log [channel id]", inline=False)
-        config_embed.add_field(name="addcog",value=f"Enables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
-        config_embed.add_field(name="remcog",value=f"Disables a set of commands in the server.\nUsage: {p}addcog [letter]", inline=False)
-        config_embed.add_field(name="help",value="Displays information about the commands that are loaded in this server.", inline=False)
+        config_embed.add_field(name="config", value="Opens the server configuration menu.", inline=False)
+        config_embed.add_field(name="help",value="Displays this help menu.", inline=False)
         config_embed.add_field(name="feedback",value="Sends upc feedback about the bot.", inline=False)
         config_embed.add_field(name="ping",value="Displays the bot's latency in ms.", inline=False)
 
