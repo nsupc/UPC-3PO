@@ -466,18 +466,18 @@ class nsinfo(commands.Cog):
         values = list(sortedDict.values())
 
         plt.bar(range(len(sortedDict)), values, tick_label=names)
-        plt.title("Days Since Last Activity in " + region)
+        plt.title(f"Days Since Last Activity in {region.title()}")
         plt.xlabel("Days Since Last Activity")
         plt.ylabel("Number of Nations")
-        plt.xticks(rotation=60, size=5)
+        plt.xticks(rotation=60, size=8)
         plt.savefig(path)
         plt.clf()
 
         color = int("2d0001", 16)
-        embed=discord.Embed(title=f'{region} Activity Graph', color=color)
+        embed=discord.Embed(title=f'{region.title()} Activity Graph', color=color)
         file = discord.File(path, filename=path)
         embed.set_image(url=f"attachment://{path}")
-        await ctx.send(file= file, embed=embed)
+        await ctx.send(file=file, embed=embed)
         os.remove(path)
 
     @activity.error
