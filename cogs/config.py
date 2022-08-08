@@ -112,7 +112,8 @@ class config(commands.Cog):
         mycursor = mydb.cursor()
         mycursor.execute(f'UPDATE guild SET prefix = "{prefix}" WHERE serverid = "{ctx.guild.id}"')
         mydb.commit()
-        await ctx.send(f"Prefix changed to '{prefix}'")
+        await ctx.send(f"Command prefix changed to '{prefix}'")
+        await log(self.bot, ctx.guild.id, f"Command prefix set to '{prefix}'")
 
     @changeprefix.error
     async def changeprefix_error(self, ctx, error):
@@ -150,7 +151,7 @@ class config(commands.Cog):
 
             response = select.values[0]
             if response == "exit":
-                await interaction.response.edit_message(content="Shutting down setup.", view=None)
+                await interaction.response.edit_message(content=None, view=None)
                 return
                 
             elif response == "cogs":
@@ -185,7 +186,8 @@ class config(commands.Cog):
                             response.append("NSInfo")
                         if "v" in cogs:
                             response.append("Verification")
-                        await interaction.response.edit_message(content=f"Loaded cogs: {', '.join(response[:-1]) + ', and ' + response[-1]}.", view=None) 
+                            await log(self.bot, ctx.guild.id, f"Loaded cogs: {', '.join(response[:-1]) + ', and ' + response[-1]}") 
+                        await interaction.response.edit_message(content=f"Loaded cogs: {', '.join(response[:-1]) + ', and ' + response[-1]}.", view=None)
                     
                 cogSelect.callback = cogSelect_callback
                 cogView = View()
@@ -240,14 +242,14 @@ class config(commands.Cog):
                             await ctx.send("Channel IDs should be numbers.")
                             return
 
-                        log = self.bot.get_channel(logid)
+                        logchannel = self.bot.get_channel(logid)
 
                         channels = []
 
                         for channel in ctx.guild.text_channels:
                             channels.append(channel)
 
-                        if log not in channels:
+                        if logchannel not in channels:
                             await ctx.send("The log channel must be a text channel in this server.")
                             return
 
@@ -255,15 +257,17 @@ class config(commands.Cog):
                         mycursor = mydb.cursor()
                         mycursor.execute(f'UPDATE guild SET logchannel = "{logid}" WHERE serverid = "{ctx.guild.id}"')
                         mydb.commit()
-                        await ctx.send(f"{log.mention} has been set as the welcome channel.")
+                        await ctx.send(f"{logchannel.mention} has been set as the log channel.")
+                        await log(self.bot, ctx.guild.id, f"{logchannel.mention} has been set as the log channel.") 
 
                     else:
-                        log = self.bot.get_channel(int(logResponse))
+                        logchannel = self.bot.get_channel(int(logResponse))
                         mydb = connector()
                         mycursor = mydb.cursor()
                         mycursor.execute(f'UPDATE guild SET logchannel = "{logResponse}" WHERE serverid = "{ctx.guild.id}"')
                         mydb.commit()                    
-                        await interaction.response.edit_message(content=f"{log.mention} has been set as the log channel.", view=None)
+                        await log(self.bot, ctx.guild.id, f"{logchannel.mention} has been set as the log channel.")
+                        await interaction.response.edit_message(content=f"{logchannel.mention} has been set as the log channel.", view=None) 
 
                 logSelect.callback = logSelect_callback
                 logView = View()
@@ -300,7 +304,8 @@ class config(commands.Cog):
                         mycursor = mydb.cursor()
                         mycursor.execute(f'UPDATE guild SET welcomechannel = null WHERE serverid = "{ctx.guild.id}"')
                         mydb.commit()
-                        await interaction.response.edit_message(content="Done.", view=None)                      
+                        await log(self.bot, ctx.guild.id, f"The welcome channel has been removed.")
+                        await interaction.response.edit_message(content="Done.", view=None)                       
 
                     elif welcomeResponse == "custom":
                         await interaction.response.edit_message(content="What is the id of your welcome channel?", view=None)
@@ -334,6 +339,7 @@ class config(commands.Cog):
                         mycursor.execute(f'UPDATE guild SET welcomechannel = "{welcomeid}" WHERE serverid = "{ctx.guild.id}"')
                         mydb.commit()
                         await ctx.send(f"{welcome.mention} has been set as the welcome channel.")
+                        await log(self.bot, ctx.guild.id, f"{welcome.mention} has been set as the welcome channel.") 
 
                     else:
                         welcome = self.bot.get_channel(int(welcomeResponse))
@@ -341,7 +347,8 @@ class config(commands.Cog):
                         mycursor = mydb.cursor()
                         mycursor.execute(f'UPDATE guild SET welcomechannel = "{welcomeResponse}" WHERE serverid = "{ctx.guild.id}"')
                         mydb.commit()                    
-                        await interaction.response.edit_message(content=f"{welcome.mention} has been set as the welcome channel.", view=None)
+                        await log(self.bot, ctx.guild.id, f"{welcome.mention} has been set as the welcome channel.")
+                        await interaction.response.edit_message(content=f"{welcome.mention} has been set as the welcome channel.", view=None) 
 
                 welcomeSelect.callback = welcomeSelect_callback
                 welcomeView = View()
@@ -373,6 +380,7 @@ class config(commands.Cog):
                     mycursor.execute(f"UPDATE guild SET welcome = '{content}' WHERE serverid = '{ctx.guild.id}'")
                     mydb.commit()
                     await ctx.send(f"Your welcome message has been set.")
+                    await log(self.bot, ctx.guild.id, f"{ctx.author} set the welcome message to: ```{content}```")
                 except:
                     await ctx.send("Sorry, it looks like something has gone wrong.")
 
@@ -395,140 +403,352 @@ class config(commands.Cog):
                 mycursor.execute(f'UPDATE guild SET region = "{region}" WHERE serverid = "{ctx.guild.id}"')
                 mydb.commit()
                 await ctx.send(f"'{region}' has been set as this server's region.")
+                await log(self.bot, ctx.guild.id, f"{ctx.author} associated this server with the gameside region https://www.nationstates.net/region={region}")
 
 
             elif response == "waresident":
-                await interaction.response.send_message("What is the role ID for your WA resident role?")
+                waResidentSelect = Select(
+                    placeholder = "Please select a WA Resident role",
+                    options = []
+                )
+                for role in ctx.guild.roles[:20]:
+                    waResidentSelect.options.append(discord.SelectOption(label=f"{role.name}", value=f"{role.id}"))
 
-                def check(m):
-                    return m.author == ctx.author and m.channel == ctx.channel
+                if len(ctx.guild.roles) > 20:
+                    waResidentSelect.options.append(discord.SelectOption(label="My role isn't listed", value="custom"))
 
-                try:
-                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                except:
-                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
-                
-                try:
-                    roleid = int(msg.content)
-                except:
-                    await ctx.send("Role IDs should be numbers.")
+                waResidentSelect.options.append(discord.SelectOption(label="Delete WA Resident Role", value="delete"))
+                waResidentSelect.options.append(discord.SelectOption(label="Cancel", value="cancel"))
 
-                roles = []
+                async def waResidentSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
 
-                for role in ctx.guild.roles:
-                    roles.append(role.id)
+                    waResidentResponse = waResidentSelect.values[0]
 
-                if roleid not in roles:
-                    await ctx.send("I can't find that role in this server.")
-                    return
+                    if waResidentResponse == "cancel":
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
 
-                mydb = connector()
-                mycursor = mydb.cursor()
-                mycursor.execute(f'UPDATE guild SET waresident = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
-                mydb.commit()
-                await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the WA resident role.")
+                    elif waResidentResponse == "delete":
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET waresident = null WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} deleted the WA Resident role")
+                        await interaction.response.edit_message(content="Your WA Resident role has been deleted.", view=None)                      
+
+                    elif waResidentResponse == "custom":
+                        await interaction.response.edit_message(content="What is the id of your WA Resident role?", view=None)
+
+                        def check(m):
+                            return m.author == ctx.author and m.channel == ctx.channel
+
+                        try:
+                            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        except:
+                            await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+                        try:
+                            waResidentid = int(msg.content)
+                        except:
+                            await ctx.send("Role IDs should be numbers.")
+
+                        waResident = self.bot.get_guild(int(ctx.guild.id)).get_role(waResidentid)
+
+                        roles = []
+
+                        for role in ctx.guild.roles:
+                            roles.append(role)
+
+                        if waResident not in roles:
+                            await ctx.send("I can't find that role in this server.")
+                            return
+
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = "{waResidentid}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {waResident.mention} as the WA Resident role")
+                        await ctx.send(f"{waResident.mention} has been set as the WA Resident role.")
+
+                    else:
+                        waResident = self.bot.get_guild(int(ctx.guild.id)).get_role(int(waResidentResponse))
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = "{waResidentResponse}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()                
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {waResident.mention} as the WA Resident role")
+                        await interaction.response.edit_message(content=f"{waResident.mention} has been set as the WA Resident role.", view=None)
+
+                waResidentSelect.callback = waResidentSelect_callback
+                waResidentView = View()
+                waResidentView.add_item(waResidentSelect)
+
+                await interaction.response.send_message(view=waResidentView)
 
 
             elif response == "resident":
-                await interaction.response.send_message("What is the role ID for your resident role?")
+                residentSelect = Select(
+                    placeholder = "Please select a Resident role",
+                    options = []
+                )
+                for role in ctx.guild.roles[:20]:
+                    residentSelect.options.append(discord.SelectOption(label=f"{role.name}", value=f"{role.id}"))
 
-                def check(m):
-                    return m.author == ctx.author and m.channel == ctx.channel
+                if len(ctx.guild.roles) > 20:
+                    residentSelect.options.append(discord.SelectOption(label="My role isn't listed", value="custom"))
 
-                try:
-                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                except:
-                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
-                
-                try:
-                    roleid = int(msg.content)
-                except:
-                    await ctx.send("Role IDs should be numbers.")
+                residentSelect.options.append(discord.SelectOption(label="Delete Resident Role", value="delete"))
+                residentSelect.options.append(discord.SelectOption(label="Cancel", value="cancel"))
 
-                roles = []
+                async def residentSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
 
-                for role in ctx.guild.roles:
-                    roles.append(role.id)
+                    residentResponse = residentSelect.values[0]
 
-                if roleid not in roles:
-                    await ctx.send("I can't find that role in this server.")
-                    return
+                    if residentResponse == "cancel":
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
 
-                mydb = connector()
-                mycursor = mydb.cursor()
-                mycursor.execute(f'UPDATE guild SET resident = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
-                mydb.commit()
-                await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the resident role.")
+                    elif residentResponse == "delete":
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET resident = null WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} deleted the Resident role")
+                        await interaction.response.edit_message(content="Your Resident role has been deleted.", view=None)                      
+
+                    elif residentResponse == "custom":
+                        await interaction.response.edit_message(content="What is the id of your Resident role?", view=None)
+
+                        def check(m):
+                            return m.author == ctx.author and m.channel == ctx.channel
+
+                        try:
+                            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        except:
+                            await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+                        try:
+                            residentid = int(msg.content)
+                        except:
+                            await ctx.send("Role IDs should be numbers.")
+
+                        resident = self.bot.get_guild(int(ctx.guild.id)).get_role(residentid)
+
+                        roles = []
+
+                        for role in ctx.guild.roles:
+                            roles.append(role)
+
+                        if resident not in roles:
+                            await ctx.send("I can't find that role in this server.")
+                            return
+
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = "{residentid}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {resident.mention} as the Resident role")
+                        await ctx.send(f"{resident.mention} has been set as the Resident role.")
+
+                    else:
+                        resident = self.bot.get_guild(int(ctx.guild.id)).get_role(int(residentResponse))
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = "{residentResponse}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()                
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {resident.mention} as the Resident role")
+                        await interaction.response.edit_message(content=f"{resident.mention} has been set as the Resident role.", view=None)
+
+                residentSelect.callback = residentSelect_callback
+                residentView = View()
+                residentView.add_item(residentSelect)
+
+                await interaction.response.send_message(view=residentView)
 
 
             elif response == "visitor":
-                await interaction.response.send_message("What is the role ID for your visitor role?")
+                visitorSelect = Select(
+                    placeholder = "Please select a visitor role",
+                    options = []
+                )
+                for role in ctx.guild.roles[:20]:
+                    visitorSelect.options.append(discord.SelectOption(label=f"{role.name}", value=f"{role.id}"))
 
-                def check(m):
-                    return m.author == ctx.author and m.channel == ctx.channel
+                if len(ctx.guild.roles) > 20:
+                    visitorSelect.options.append(discord.SelectOption(label="My role isn't listed", value="custom"))
 
-                try:
-                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                except:
-                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
-                
-                try:
-                    roleid = int(msg.content)
-                except:
-                    await ctx.send("Role IDs should be numbers.")
+                visitorSelect.options.append(discord.SelectOption(label="Delete Visitor Role", value="delete"))
+                visitorSelect.options.append(discord.SelectOption(label="Cancel", value="cancel"))
 
-                roles = []
+                async def visitorSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
 
-                for role in ctx.guild.roles:
-                    roles.append(role.id)
+                    visitorResponse = visitorSelect.values[0]
 
-                if roleid not in roles:
-                    await ctx.send("I can't find that role in this server.")
-                    return
+                    if visitorResponse == "cancel":
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
 
-                mydb = connector()
-                mycursor = mydb.cursor()
-                mycursor.execute(f'UPDATE guild SET visitor = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
-                mydb.commit()
-                await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the visitor role.")
+                    elif visitorResponse == "delete":
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET visitor = null WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} deleted the Visitor role")
+                        await interaction.response.edit_message(content="Your Visitor role has been deleted.", view=None)                      
 
+                    elif visitorResponse == "custom":
+                        await interaction.response.edit_message(content="What is the id of your Visitor role?", view=None)
+
+                        def check(m):
+                            return m.author == ctx.author and m.channel == ctx.channel
+
+                        try:
+                            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        except:
+                            await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+                        try:
+                            visitorid = int(msg.content)
+                        except:
+                            await ctx.send("Role IDs should be numbers.")
+
+                        visitor = self.bot.get_guild(int(ctx.guild.id)).get_role(visitorid)
+
+                        roles = []
+
+                        for role in ctx.guild.roles:
+                            roles.append(role)
+
+                        if visitor not in roles:
+                            await ctx.send("I can't find that role in this server.")
+                            return
+
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET visitor = "{visitorid}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {visitor.mention} as the Visitor role")
+                        await ctx.send(f"{visitor.mention} has been set as the Visitor role.")
+
+                    else:
+                        visitor = self.bot.get_guild(int(ctx.guild.id)).get_role(int(visitorResponse))
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET visitor = "{visitorResponse}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()        
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {visitor.mention} as the Visitor role")        
+                        await interaction.response.edit_message(content=f"{visitor.mention} has been set as the Visitor role.", view=None)
+
+                visitorSelect.callback = visitorSelect_callback
+                visitorView = View()
+                visitorView.add_item(visitorSelect)
+
+                await interaction.response.send_message(view=visitorView)
 
             elif response == "verified":
-                await interaction.response.send_message("What is the role ID for your verified user role?")
+                verifiedSelect = Select(
+                    placeholder = "Please select a verified user role",
+                    options = []
+                )
+                for role in ctx.guild.roles[:20]:
+                    verifiedSelect.options.append(discord.SelectOption(label=f"{role.name}", value=f"{role.id}"))
 
-                def check(m):
-                    return m.author == ctx.author and m.channel == ctx.channel
+                if len(ctx.guild.roles) > 20:
+                    verifiedSelect.options.append(discord.SelectOption(label="My role isn't listed", value="custom"))
 
-                try:
-                    msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-                except:
-                    await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
-                
-                try:
-                    roleid = int(msg.content)
-                except:
-                    await ctx.send("Role IDs should be numbers.")
+                verifiedSelect.options.append(discord.SelectOption(label="Delete Verified User Role", value="delete"))
+                verifiedSelect.options.append(discord.SelectOption(label="Cancel", value="cancel"))
 
-                roles = []
+                async def verifiedSelect_callback(interaction):
+                    if interaction.user != ctx.message.author:
+                        return
 
-                for role in ctx.guild.roles:
-                    roles.append(role.id)
+                    verifiedResponse = verifiedSelect.values[0]
 
-                if roleid not in roles:
-                    await ctx.send("I can't find that role in this server.")
-                    return
+                    if verifiedResponse == "cancel":
+                        await interaction.response.edit_message(content="Done.", view=None)
+                        return
 
-                mydb = connector()
-                mycursor = mydb.cursor()
-                mycursor.execute(f'UPDATE guild SET verified = "{roleid}" WHERE serverid = "{ctx.guild.id}"')
-                mydb.commit()
-                await ctx.send(f"'{ctx.guild.get_role(roleid)}' has been set as the verified user role.")
+                    elif verifiedResponse == "delete":
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = null WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} deleted the Verified User role")
+                        await interaction.response.edit_message(content="Your Verified User role has been deleted.", view=None)                      
+
+                    elif verifiedResponse == "custom":
+                        await interaction.response.edit_message(content="What is the id of your Verified User role?", view=None)
+
+                        def check(m):
+                            return m.author == ctx.author and m.channel == ctx.channel
+
+                        try:
+                            msg = await self.bot.wait_for('message', timeout=60.0, check=check)
+                        except:
+                            await ctx.channel.send("Sorry, you ran out of time. Feel free to try again when you're ready.")
+
+                        try:
+                            verifiedid = int(msg.content)
+                        except:
+                            await ctx.send("Role IDs should be numbers.")
+
+                        verified = self.bot.get_guild(int(ctx.guild.id)).get_role(verifiedid)
+
+                        roles = []
+
+                        for role in ctx.guild.roles:
+                            roles.append(role)
+
+                        if verified not in roles:
+                            await ctx.send("I can't find that role in this server.")
+                            return
+
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = "{verifiedid}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {verified.mention} as the Verified User role")
+                        await ctx.send(f"{verified.mention} has been set as the Verified User role.")
+
+                    else:
+                        verified = self.bot.get_guild(int(ctx.guild.id)).get_role(int(verifiedResponse))
+                        mydb = connector()
+                        mycursor = mydb.cursor()
+                        mycursor.execute(f'UPDATE guild SET verified = "{verifiedResponse}" WHERE serverid = "{ctx.guild.id}"')
+                        mydb.commit()            
+                        await log(self.bot, ctx.guild.id, f"{ctx.author} set {verified.mention} as the Verified User role")    
+                        await interaction.response.edit_message(content=f"{verified.mention} has been set as the Verified User role.", view=None)
+
+                verifiedSelect.callback = verifiedSelect_callback
+                verifiedView = View()
+                verifiedView.add_item(verifiedSelect)
+
+                await interaction.response.send_message(view=verifiedView)
 
         select.callback = select_callback
         view = View()
         view.add_item(select)
 
-        await ctx.send(view=view)
+        color = int("2d0001", 16)
+        embed = discord.Embed(title="Config", colour=color)
+        embed.add_field(name="Cogs", value="Enable or disable cogs for this server.", inline=False)
+        embed.add_field(name="Log Channel", value="Set a server log channel.", inline=False)
+        embed.add_field(name="Welcome Channel", value="Set a channel to welcome new members.", inline=False)
+        embed.add_field(name="Welcome Message", value="Set a message to send when a new member joins.", inline=False)
+        embed.add_field(name="Region", value="Associate a region with this server for role assignment.", inline=False)
+        embed.add_field(name="WA Resident Role", value="Set or delete this server's WA Resident role.", inline=False)
+        embed.add_field(name="Resident Role", value="Set or delete this server's Resident role.", inline=False)
+        embed.add_field(name="Visitor Role", value="Set or delete this server's Visitor role.", inline=False)
+        embed.add_field(name="Verified User Role", value="Set or delete this server's Registered User role.", inline=False)
+
+        await ctx.send(embed=embed, view=view)
 
     @config.error
     async def config_error(self, ctx, error):
