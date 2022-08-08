@@ -178,7 +178,14 @@ class config(commands.Cog):
                         mycursor = mydb.cursor()
                         mycursor.execute(f'UPDATE guild SET cogs = "{cogs}" WHERE serverid = "{ctx.guild.id}"')
                         mydb.commit()
-                        await interaction.response.edit_message(content="Done.", view=None) 
+                        response = []
+                        if "a" in cogs:
+                            response.append("Admin")
+                        if "n" in cogs:
+                            response.append("NSInfo")
+                        if "v" in cogs:
+                            response.append("Verification")
+                        await interaction.response.edit_message(content=f"Loaded cogs: {', '.join(response[:-1]) + ', and ' + response[-1]}.", view=None) 
                     
                 cogSelect.callback = cogSelect_callback
                 cogView = View()
@@ -231,6 +238,7 @@ class config(commands.Cog):
                             logid = int(msg.content)
                         except:
                             await ctx.send("Channel IDs should be numbers.")
+                            return
 
                         log = self.bot.get_channel(logid)
 
