@@ -13,6 +13,7 @@ from views.moderation_view import ModerationView
 
 load_dotenv()
 
+#TODO: add command to retrieve moderation history from database
 
 class moderation(commands.Cog):
     def __init__(self, bot):
@@ -22,8 +23,8 @@ class moderation(commands.Cog):
     #Events
     @commands.Cog.listener()
     async def on_ready(self):
-        if not self.check_notices.is_running():
-            self.check_notices.start()
+        if not self.check_automod.is_running():
+            self.check_automod.start()
     '''
 
     #Checks
@@ -34,7 +35,7 @@ class moderation(commands.Cog):
 
 #===================================================================================================#
     @tasks.loop(minutes=1)
-    async def check_notices(self):
+    async def check_automod(self):
         moderation_channel = self.bot.get_channel(1022638032295297124)
 
         notices_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=terrible_purpose&q=notices", mode=2).text, "xml")
@@ -75,14 +76,14 @@ class moderation(commands.Cog):
 
         match action:
             case "start":
-                if not self.check_notices.is_running():
-                    self.check_notices.start()
+                if not self.check_automod.is_running():
+                    self.check_automod.start()
                     await ctx.reply("Automod started.")
                 else:
                     await ctx.reply("Automod is already running.")
             case "stop":
-                if self.check_notices.is_running():
-                    self.check_notices.cancel()
+                if self.check_automod.is_running():
+                    self.check_automod.cancel()
                     await ctx.reply("Automod stopped.")
                 else:
                     await ctx.reply("Automod already stopped.")

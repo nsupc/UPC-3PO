@@ -6,9 +6,9 @@ from the_brain import connector
 class ModerationModal(discord.ui.Modal, title="Moderation"):
     def __init__(self, embed, view, message, reported_message_id, reported_user):
         super().__init__()
-        #self.bot = bot
         self.embed = embed
         self.view = view
+        #can probably drop the rest of these because they're part of the view, will test when i am less exhausted
         self.message = message
         self.reported_message_id = reported_message_id
         self.reported_user = reported_user
