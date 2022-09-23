@@ -1,3 +1,0 @@
-python-dotenv
-mysql-connector-python
-matplotlib
