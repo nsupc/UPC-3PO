@@ -1,157 +1,135 @@
+import datetime
 import discord
-from discord.ext import commands
-import time
 
-from functions import get_cogs,logerror,log
+from discord import app_commands
+from discord.app_commands import Choice
+from discord.ext import commands
+from dotenv import load_dotenv
+
+from the_brain import connector, get_cogs
+
+load_dotenv()
+
+#TODO check if cog is loaded in this server
 
 class admin(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 
     #Checks
     def isLoaded():
         async def predicate(ctx):
-            r = get_cogs(ctx.guild.id)
-            return "a" in r
+            loaded_cogs = get_cogs(ctx.guild.id)
+            return "a" in loaded_cogs
         return commands.check(predicate)
 
-    #Commands
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="addrole", with_app_command=True, desciption="Assign a role to a user")
     @isLoaded()
     @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    async def addrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
+    async def addrole(self, ctx: commands.Context, member: discord.Member, role: discord.Role):
+        await ctx.defer()
+
         await member.add_roles(role)
-        await ctx.send(f"{member.name} has been added to {role}.")
-        await log(self.bot, ctx.guild.id, f"<@!{member.id}> was given the role {role}")
+        await ctx.reply(f"{member} was given the role {role}")
+#===================================================================================================#
 
-
-    @addrole.error
-    async def addrole_error(self, ctx, error):
-        if "a" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MemberNotFound):
-            await ctx.send("I can't find that user.")
-        elif isinstance(error, commands.RoleNotFound):
-            await ctx.send("I can't find that role.")
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("You don't have permission to use this command.")
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("Sorry, I don't have permission to manage roles in this server.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please include both a user and a role.")
-        elif isinstance(error, commands.CommandInvokeError):
-            logerror(ctx, error)
-            await ctx.send("I can't do that right now. That role is most likely above mine in this server's role hierarchy.")
-        
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="ban", with_app_command=True, description="Ban a user from the server")
     @isLoaded()
-    @commands.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    async def remrole(self, ctx, member : commands.MemberConverter, role : discord.Role):
-        await member.remove_roles(role)
-        await ctx.send(f"{member.name} has been removed from {role}.")
-        await log(self.bot, ctx.guild.id, f"<@!{member.id}> was removed from the role {role}")
+    @commands.has_permissions(ban_members=True)
+    async def ban(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        await ctx.defer()
 
+        await member.ban(reason=reason)
+        if not reason:
+            await ctx.reply(f"{member} was banned.")
+        else:
+            await ctx.reply(f"{member} was banned for reason {reason}")
+#===================================================================================================#
 
-    @remrole.error
-    async def remrole_error(self, ctx, error):
-        if "a" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MemberNotFound):
-            await ctx.send("I can't find that user.")
-        elif isinstance(error, commands.RoleNotFound):
-            await ctx.send("I can't find that role.")
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("You don't have permission to use this command.")
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("Sorry, I don't have permission to manage roles in this server.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please include both a user and a role.")
-        elif isinstance(error, commands.CommandInvokeError):
-            logerror(ctx, error)
-            await ctx.send("I can't do that right now. That role is most likely above mine in this server's role hierarchy.")
-
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="kick", with_app_command=True, description="Kick a user from the server")
     @isLoaded()
     @commands.has_permissions(kick_members=True)
-    @commands.bot_has_permissions(kick_members=True)
-    async def kick(self, ctx, member : commands.MemberConverter, *, reason = "None"):
-        await member.kick(reason = reason)
-        await ctx.send(f"{member} has been kicked.")
-        await log(self.bot, ctx.guild.id, f"<@!{member.id}> was kicked by {ctx.author} for '{reason}'")
+    async def kick(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        await ctx.defer()
 
-    @kick.error
-    async def kick_error(self, ctx, error):
-        if "a" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MemberNotFound):
-            await ctx.send("I can't find that user.")
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("I do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a user.")
+        await member.kick(reason=reason)
+        if not reason:
+            await ctx.reply(f"{member} was kicked.")
         else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
+            await ctx.reply(f"{member} was kicked for reason {reason}.")
+#===================================================================================================#
 
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="remrole", with_app_command=True, description="Remove a role from a user")
+    @isLoaded()
+    @commands.has_permissions(manage_roles=True)
+    async def remrole(self, ctx: commands.Context, member: discord.Member, role: discord.Role):
+        await ctx.defer()
+
+        await member.remove_roles(role)
+        await ctx.reply(f"{member} was removed from role {role}")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="timeout", with_app_command=True, description="Timeout a user")
+    @isLoaded()
+    @commands.has_permissions(moderate_members=True)
+    async def timeout(self, ctx: commands.Context, member: discord.Member, reason: str = None, days: int = None, hours: int = None, minutes: int = None):
+        await ctx.defer()
+
+        if member.id == ctx.author.id:
+            await ctx.reply("You can't time yourself out.")
+            return
+        elif member.guild_permissions.moderate_members:
+            await ctx.reply("You can't timeout a moderator.")
+            return
+
+        if days == None:
+            days = 0
+        if hours == None:
+            hours = 0
+        if minutes == None:
+            minutes = 0
+        duration = datetime.timedelta(days=days, hours=hours, minutes=minutes)
+
+        if not reason:
+            await member.timeout(duration)
+            await ctx.reply(f"{member.name} has been timed out until <t:{int(datetime.datetime.timestamp(datetime.datetime.now() + duration))}:f>")
+        else:
+            await member.timeout(duration, reason=reason)
+            await ctx.reply(f"{member.name} has been timed out until <t:{int(datetime.datetime.timestamp(datetime.datetime.now() + duration))}:f>")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="unban", with_app_command=True, description="Unban a user")
     @isLoaded()
     @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
-    async def ban(self, ctx, member : commands.MemberConverter, *, reason = "None"):
-        await member.ban(reason = reason)
-        await ctx.send(f"{member} has been banned.")
-        await log(self.bot, ctx.guild.id, f"<@!{member.id}> was banned by {ctx.author} for '{reason}'")
+    async def unban(self, ctx: commands.Context, id):
+        await ctx.defer()
 
-    @ban.error
-    async def ban_error(self, ctx, error):
-        if "a" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MemberNotFound):
-            await ctx.send("I can't find that user.")
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("I do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a user.")
-        else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
+        user = await self.bot.fetch_user(int(id))
+        await ctx.guild.unban(user)
 
-    @commands.command()
+        await ctx.reply(f"{user.name} has been unbanned.")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="untimeout", with_app_command=True, description="Untimeout a user")
     @isLoaded()
-    @commands.has_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
-    async def unban(self, ctx, *, member):
-        banned_users = await ctx.guild.bans()
-        name, discriminator = member.split("#")
-        for entry in banned_users:
-            user = entry.user
-            if(user.name, user.discriminator) == (name, discriminator):
-                await ctx.guild.unban(user)
-                await ctx.send(f"{member} has been unbanned.")
-                await log(self.bot, ctx.guild.id, f"<@!{member.id}> was unbanned by {ctx.author}")
+    @commands.has_permissions(moderate_members=True)
+    async def untimeout(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        await ctx.defer()
 
-    @unban.error
-    async def unban_error(self, ctx, error):
-        if "a" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.ConversionError):
-            await ctx.send("I can't find that user.")
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("You do not have permission to perform that command.")
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("I do not have permission to perform that command.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a user.")
+        if not reason:
+            await member.timeout(None)
+            await ctx.reply(f"{member.name}'s timeout has ended")
         else:
-            logerror(ctx, error)
-            await ctx.send("Sorry, I can't do that right now.")
+            await member.timeout(None, reason=reason)
+            await ctx.reply(f"{member.name}'s timeout has ended")
+#===================================================================================================#
 
 async def setup(bot):
     await bot.add_cog(admin(bot))

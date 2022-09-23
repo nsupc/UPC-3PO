@@ -1,20 +1,29 @@
-from bs4 import BeautifulSoup as bs
-from collections import OrderedDict
+import asyncio
 import datetime
-from datetime import date
 import discord
-from discord.ext import commands
-from dotenv import load_dotenv
 import math
 import matplotlib.pyplot as plt
 import os
 
-from functions import api_call,connector,get_cogs,logerror
+from bs4 import BeautifulSoup as bs
+from collections import OrderedDict
+from datetime import date
+from discord import app_commands
+from discord.ext import commands
+from discord.ui import Button, View
+from dotenv import load_dotenv
+
+from the_brain import api_call, connector, format_names, get_cogs
+from views.endotarting_view import EndotartingView
+from views.nne_view import NNEView
 
 load_dotenv()
 
-class nsinfo(commands.Cog):
 
+#TODO: check if cog is loaded in this server
+#TODO: filter market by rarity
+
+class nsinfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -29,285 +38,76 @@ class nsinfo(commands.Cog):
     #Checks
     def isLoaded():
         async def predicate(ctx):
-            r = get_cogs(ctx.guild.id)
-            return "n" in r
+            loaded_cogs = get_cogs(ctx.guild.id)
+            return "n" in loaded_cogs
         return commands.check(predicate)
 
-    #Commands
-    @commands.command(aliases=["n"])
+#===================================================================================================#
+    @commands.hybrid_command(name="activity", with_app_command=True, desciption="Displays a graph showing login activity for nations in a region")
     @isLoaded()
-    async def nation(self, ctx, *, msg):
-        try:
-            nat = msg.lower().replace(" ","_")
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat};q=fullname+motto+flag+region+wa+influence+category+answered+population+firstlogin+dbid+lastlogin+census;scale=65+80;mode=score').text, 'xml')
-            region = r.REGION.text.lower().replace(" ","_")
-    
-            census = []
-            for score in r.CENSUS.find_all("SCORE"):
-                census.append(round(float(score.text), 2))  
+    async def activity(self, ctx: commands.Context, *, region: str):
+        await ctx.defer()
 
-            #inf = "{:,}".format(int(r.CENSUS.text.strip('\n\n')[:-3]))
-
-            color = int("2d0001", 16)
-            embed=discord.Embed(title=r.FULLNAME.text, url=f"https://nationstates.net/nation={nat}", description=f'"{r.MOTTO.text}"', color=color)
-            embed.set_thumbnail(url=r.FLAG.text)
-            embed.add_field(name="Region", value=f"[{r.REGION.text}](https://nationstates.net/region={region}) ({census[1]} Days)", inline=True)
-            embed.add_field(name="World Assembly Status", value=r.UNSTATUS.text, inline=True)
-            embed.add_field(name="Influence", value=f"{r.INFLUENCE.text} ({'{:,}'.format(int(census[0]))})", inline=True)
-
-            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-            embed.add_field(name="Issues", value=r.ISSUES_ANSWERED.text, inline=True)
-
-            embed.add_field(name="Population", value=self.millify(r.POPULATION.text), inline=True)
-            fdate = str(datetime.date.fromtimestamp(int(r.FIRSTLOGIN.text)))
-            if fdate in ['1969-12-31', '1970-01-01']:
-                embed.add_field(name="Founded", value="Antiquity", inline=True)
-            else:
-                embed.add_field(name="Founded", value=fdate, inline=True)
-            embed.add_field(name="ID", value=r.DBID.text, inline=True)
-            embed.add_field(name="Most Recent Activity", value=f'<t:{int(r.LASTLOGIN.text)}:R>', inline=True)
-            await ctx.send(embed=embed)
-        except:
-            color = int("2d0001", 16)
-            file = discord.File("./media/exnation.png", filename="image.png")
-            embed=discord.Embed(title=msg.title(), url=f"https://www.nationstates.net/page=boneyard?nation={nat}", description=f"'If an item does not appear in our records, it does not exist.'\n-Jocasta Nu\nPerhaps the nation you're looking for is in the Boneyard?", color=color)
-            embed.set_thumbnail(url="attachment://image.png")
-            await ctx.send(file=file, embed=embed)
-
-    @nation.error
-    async def nation_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        else:
-            logerror(ctx, error)
-
-    @commands.command(aliases=["tart"])
-    @isLoaded()
-    @commands.bot_has_permissions(attach_files=True)
-    async def endotart(self, ctx, *, nation):
+        reg = format_names(name=region, mode=1)
         mydb = connector()
-        nat = nation.lower().replace(" ","_")
-        natarr = []
-        path = nat + "_endotart.html"
-
-        try:
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region').text, 'xml').REGION.text
-        except:
-            await ctx.send(f"Uh oh, I can't find the nation {nation}.")
-            return
-
         mycursor = mydb.cursor()
 
-        mycursor.execute(f"SELECT name FROM nations WHERE region = '{r}' AND endorsements NOT LIKE '%,{nat},%' AND NOT name = '{nation}' AND NOT unstatus = 'Non-member'")
-
+        mycursor.execute(f"SELECT lastlogin FROM nations WHERE region = '{reg}'")
         myresult = mycursor.fetchall()
 
         if not myresult:
-            await ctx.send(f"I can't find any nations in {r} for {nation} to endorse right now.")
-            return
-
-        for x in myresult:
-            natarr.append(str(x[0]).replace(",","").replace(" ","_").lower())
-
-        write = open(path, "w")
-        write.write(f"<HTML><TITLE>{nation} Endotarting</TITLE><BODY>")
-        for x in natarr:
-            write.write(f'<a href="https://www.nationstates.net/nation={x}#composebutton">{x}</a><br>')
-        write.write("</BODY></HTML>")
-        write.close()
-
-        await ctx.send(file=discord.File(path))
-        os.remove(path)
-
-    @endotart.error
-    async def endotart_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("Sorry, I don't have permission to upload files in this server.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
+            await ctx.reply("I can't find that region.")
         else:
-            logerror(ctx, error)
+            logins = {}
+            today = date.today()
+            path = f"{reg}_activity.jpg"
 
-    @commands.command()
-    @isLoaded()
-    @commands.bot_has_permissions(attach_files=True)
-    async def nne(self, ctx, *, nation):
-        mydb = connector()
-        nat = nation.lower().replace(" ","_")
-        path = nat + "_nne.html"
-        was = []
-        endos = []
-        nne = []
+            for timestamp in myresult:
+                days = (today - datetime.date.fromtimestamp(int(timestamp[0]))).days
+                if logins.get(days) == None:
+                    logins[days] = 1
+                else:
+                    logins[days] += 1
 
-        try:
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=endorsements+region').text, 'xml')
-        except:
-            await ctx.send(f"Uh oh, I can't find the nation {nation}.")
-            return
+            sorted_logins = OrderedDict(sorted(logins.items()))
+            names = list(sorted_logins.keys())
+            values = list(sorted_logins.values())
 
-        endos = r.ENDORSEMENTS.text.split(",")
-
-        mycursor = mydb.cursor()
-        mycursor.execute(f'SELECT name FROM ns.nations WHERE NOT name = "{nation}" AND NOT unstatus = "Non-member" AND region = "{r.REGION.text}"')
-        for x in mycursor.fetchall():
-            was.append(str(x)[2:-3].lower().replace(" ","_"))
-
-        for x in was:
-            if x not in endos:
-                nne.append(x)
-            
-        if not nne:
-            await ctx.send(f"I can't find any nations in {r.REGION.text} that need to endorse {nation} right now.")
-            return
-
-        write = open(path, "w")
-        write.write(f"<HTML><TITLE>NNE {nation}</TITLE><BODY>")
-        for x in nne:
-            write.write('<a href="https://www.nationstates.net/nation={}#composebutton">{}</a><br>'.format(x,x))
-        write.write("</BODY></HTML>")
-        write.close()
-
-        await ctx.send(file=discord.File(path))
-        os.remove(path)
-
-    @nne.error
-    async def nne_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("Sorry, I don't have permission to upload files in this server.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        else:
-            logerror(ctx, error)
-
-    @commands.command()
-    @isLoaded()
-    async def s1(self, ctx, *, nation):
-        nat = nation.replace(" ","_").lower()
-        mydb = connector()
-        mycursor = mydb.cursor()
-
-        mycursor.execute(f'SELECT dbid FROM s1 WHERE name = "{nat}"')
-        try:
-            dbid = str(mycursor.fetchone()[0])
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=1').text, 'xml')
-
-            ask = 10000.00
-            bid = 0.00
-            asks = 0
-            bids = 0
-
-            for market in r.find_all("MARKET"):
-                if market.TYPE.text == "bid":
-                    bids += 1  
-                    if float(market.PRICE.text) > bid:
-                        bid = float(market.PRICE.text)
-                elif market.TYPE.text == "ask":
-                    asks += 1
-                    if float(market.PRICE.text) < ask:
-                        ask = float(market.PRICE.text)
-
-            if asks == 0:
-                ask = "None"
-            if bids == 0:
-                bid = "None"
+            plt.bar(range(len(sorted_logins)), values, tick_label=names)
+            plt.title(f"Days Since Last Activity in {region.title()}")
+            plt.xlabel("Days Since Last Activity")
+            plt.ylabel("Number of Nations")
+            plt.xticks(rotation=60, size=8)
+            plt.savefig(path)
+            plt.clf()
 
             color = int("2d0001", 16)
-            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=1", description=f'"{r.SLOGAN.text}"', color=color)
-            embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s1/{r.FLAG.text}")
-            embed.add_field(name="Market Value", value=r.MARKET_VALUE.text, inline=True)
-            embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
-            embed.add_field(name="Card ID", value=r.CARDID.text, inline=True)
-            embed.add_field(name=f"Lowest Ask (of {asks})", value=ask, inline=True)
-            embed.add_field(name=f"Highest Bid (of {bids})", value=bid, inline=True)
+            embed=discord.Embed(title=f'{region.title()} Activity Graph', color=color)
+            file = discord.File(path, filename=path)
+            embed.set_image(url=f"attachment://{path}")
+            await ctx.send(file=file, embed=embed)
+            file.close()
+            os.remove(path)
+#===================================================================================================#
 
-            await ctx.send(embed=embed)
-        except:
-            await ctx.send(f"{nation} does not have a Season 1 Trading Card.")
-
-    @s1.error
-    async def s1_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        else:
-            logerror(ctx, error)
-
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="deck", with_app_command=True, description="Displays a graph showing the composition of a nation's Trading Card deck")
     @isLoaded()
-    async def s2(self, ctx, *, nation):
-        nat = nation.replace(" ","_").lower()
-        mydb = connector()
-        mycursor = mydb.cursor()
+    async def deck(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
 
-        mycursor.execute(f'SELECT dbid FROM s2 WHERE name = "{nat}"')
-        try:
-            dbid = str(mycursor.fetchone()[0])
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=2').text, 'xml')
+        nat = format_names(name=nat, mode=1)
 
-            ask = 10000.00
-            bid = 0.00
-            asks = 0
-            bids = 0
+        card_count_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+info;nationname={nat}", mode=1).text, "xml").find("NUM_CARDS")
 
-            for market in r.find_all("MARKET"):
-                if market.TYPE.text == "bid":
-                    bids += 1  
-                    if float(market.PRICE.text) > bid:
-                        bid = float(market.PRICE.text)
-                elif market.TYPE.text == "ask":
-                    asks += 1
-                    if float(market.PRICE.text) < ask:
-                        ask = float(market.PRICE.text)
-
-            if asks == 0:
-                ask = "None"
-            if bids == 0:
-                bid = "None"
-
-            color = int("2d0001", 16)
-            embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=deck/card={r.CARDID.text}/season=2", description=f'"{r.SLOGAN.text}"', color=color)
-            embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s2/{r.FLAG.text}")
-            embed.add_field(name="Market Value", value=r.MARKET_VALUE.text, inline=True)
-            embed.add_field(name="Rarity", value=r.CATEGORY.text.capitalize(), inline=True)
-            embed.add_field(name="Card ID", value=r.CARDID.text, inline=True)
-            embed.add_field(name=f"Lowest Ask (of {asks})", value=ask, inline=True)
-            embed.add_field(name=f"Highest Bid (of {bids})", value=bid, inline=True)
-
-            await ctx.send(embed=embed)
-        except:
-            await ctx.send(f"{nation} does not have a Season 2 Trading Card.")
-
-    @s2.error
-    async def s2_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
+        if not card_count_data:
+            await ctx.reply("I can't find that nation.")
+        elif int(card_count_data.text) == 0:
+            await ctx.reply(f"{format_names(name=nat, mode=2)} does not have any cards.")
+        elif int(card_count_data.text) >= 20000:
+            await ctx.reply(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nat.title().replace('_', ' ')}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
         else:
-            logerror(ctx, error)
-
-    @commands.command()
-    @isLoaded()
-    async def deck(self, ctx, *, nation):
-        nat = nation.lower().replace(" ","_")
-
-        r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+info;nationname={nat}").text, 'xml')
-
-        if int(r.NUM_CARDS.text) > 20000:
-            await ctx.send(f"Due to limited processing capacity, this command only works for nations with less than 20,000 cards (for now!). You can take a look at {nation.title()}'s deck here:\nhttps://www.nationstates.net/page=deck/nation={nat}")
-            return
-        elif int(r.NUM_CARDS.text) == 0:
-            await ctx.send(f"{nation.title()} doesn't have any cards yet.")
-            return
-        else:
-            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}").text, 'xml')
+            deck_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}", mode=1).text, 'xml')
             cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
             sdict = {"1": 0, "2": 0}
             sum = 0
@@ -316,7 +116,7 @@ class nsinfo(commands.Cog):
             color = []
             colors = ["#b69939", "#b49e68", "#9473a9", "#7b9ead", "#80ae82", "#a6a6a6"]
 
-            for card in r.find_all("CARD"):
+            for card in deck_data.find_all("CARD"):
                 cdict[card.CATEGORY.text] += 1
                 sdict[card.SEASON.text] += 1
                 sum += 1
@@ -338,240 +138,446 @@ class nsinfo(commands.Cog):
 
             file = discord.File(path, filename=path)
             color = int("2d0001", 16)
-            embed=discord.Embed(title="{}'s Deck".format(nat.replace("_"," ").title()), url = f"https://www.nationstates.net/page=deck/nation={nat}", color=color)
-            embed.add_field(name="Deck Value", value=f"{r.DECK_VALUE.text}", inline=True)
-            embed.add_field(name="Bank", value=f"{r.BANK.text}", inline=True)
+            embed=discord.Embed(title=f"{format_names(name=nat, mode=2)}'s Deck", url = f"https://www.nationstates.net/page=deck/nation={nat}", color=color)
+            embed.add_field(name="Deck Value", value=f"{deck_data.DECK_VALUE.text}", inline=True)
+            embed.add_field(name="Bank", value=f"{deck_data.BANK.text}", inline=True)
             embed.add_field(name="Number of Cards", value = f"{sum}", inline=True)
             embed.set_image(url=f"attachment://{path}")
             embed.set_footer(text=f"Season 1 Cards: {sdict['1']}, Season 2 Cards: {sdict['2']}")
 
-            await ctx.send(file=file, embed=embed)
+            await ctx.reply(file=file, embed=embed)
+            file.close()
             os.remove(path)
+#===================================================================================================#
 
-    @deck.error
-    async def deck_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.")
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("Sorry, I don't have permission to upload files in this server.")
-        elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send("Sorry, I can't find that nation.")
-        else:
-            logerror(ctx, error)
-
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="endotart", with_app_command=True, description="Display a list of World Assembly members in a region that a nation is not endorsing")
     @isLoaded()
-    async def market(self, ctx):
-        r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?q=cards+auctions;limit=1000").text, 'xml')
+    async def endotart(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
+
+        nat = format_names(name=nation, mode=1)
+        nation_req = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region", mode=1)
+        
+        if not nation_req:
+            await ctx.reply("I can't find that nation.")
+            return
+
+        region = format_names(name=bs(nation_req.text, 'xml').REGION.text, mode=1)
+        
+        mydb = connector()
+        mycursor = mydb.cursor()
+
+        mycursor.execute(f"SELECT name FROM nations WHERE region = '{region}' AND endorsements NOT LIKE '%,{nat},%' AND NOT name = '{nat}' AND NOT unstatus = 'Non-member'")
+        
+        myresult = mycursor.fetchall()
+        
+        if not myresult:
+            await ctx.reply(f"I can't find anyone in {format_names(name=region, mode=2)} for {nat.title().replace('_', ' ')} to endorse.")
+            return
+
+        # this block creates a list of discord embeds, each containing a list of 20 nations for the given nation to endorse
+        count = 1
+        pages = math.ceil(len(myresult) / 20)
+        endotarting_pages = []
+        for i in range(0, len(myresult), 20):
+            chunk = myresult[i: i + 20]
+            embed_body = ""
+            for item in chunk:
+                embed_body += f"· [{format_names(name=item[0], mode=2)}](https://www.nationstates.net/nation={item[0]})\n"
+
+            color = int("2d0001", 16)
+            embed = discord.Embed(title=f"Endotarting: {format_names(name=nat, mode=2)}", description=embed_body, color=color)
+            embed.set_footer(text=f"Page {count} of {pages}")
+            count += 1
+            endotarting_pages.append(embed)
+
+        if len(endotarting_pages) > 1:
+            view = EndotartingView(ctx=ctx, endotarting_pages=endotarting_pages)
+            view.message = await ctx.reply(embed=endotarting_pages[0], view=view)
+        else:
+            await ctx.reply(embed=endotarting_pages[0])
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="ga", with_app_command=True, description="Display information about current and historical General Assembly resolutions")
+    @isLoaded()
+    async def ga(self, ctx: commands.Context, *, id: int=None):
+        await ctx.defer()
+
+        if not id:
+            resolution_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=resolution", mode=1).text, "xml")
+            
+            if not resolution_data.find("PROPOSED_BY"):
+                await ctx.reply("There isn't currently a General Assembly resolution at vote.")
+                return
+            else:
+                author_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={resolution_data.find('PROPOSED_BY').text}", mode=1).text, "xml")
+
+                color = int("2d0001", 16)
+                embed=discord.Embed(title=resolution_data.NAME.text, url="https://www.nationstates.net/page=ga", description=f"by [{author_data.NAME.text}](https://www.nationstates.net/nation={resolution_data.find('PROPOSED_BY').text})", color=color)
+                embed.set_thumbnail(url="https://www.nationstates.net/images/ga.jpg")
+                embed.add_field(name="Category", value=resolution_data.CATEGORY.text, inline=True)
+                embed.add_field(name="Vote", value=f"For: {resolution_data.TOTAL_VOTES_FOR.text}, Against: {resolution_data.TOTAL_VOTES_AGAINST.text}", inline=False)
+                embed.add_field(name="Voting Ends", value=f"<t:{str(int(resolution_data.PROMOTED.text) + 345600)}:R>") 
+
+                await ctx.reply(embed=embed)
+        else:
+            resolution_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?wa=1&id={id}&q=resolution", mode=1).text, "xml")
+            
+            if not resolution_data.find("PROPOSED_BY"):
+                await ctx.reply("There isn't a historical resolution with that ID.")
+                return
+            else:
+                color = int("2d0001", 16)
+
+                if resolution_data.find("REPEALED"):
+                    embed=discord.Embed(title=f'(REPEALED) {resolution_data.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f"by [{resolution_data.PROPOSED_BY.text.replace('_', ' ').title()}](https://www.nationstates.net/nation={resolution_data.find('PROPOSED_BY').text})", color=color)
+                else:
+                    embed=discord.Embed(title=resolution_data.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f"by [{resolution_data.PROPOSED_BY.text.replace('_', ' ').title()}](https://www.nationstates.net/nation={resolution_data.find('PROPOSED_BY').text})", color=color)
+                embed.set_thumbnail(url=f"https://www.nationstates.net/images/ga.jpg")
+                embed.add_field(name="Category", value=resolution_data.CATEGORY.text, inline=True)
+                embed.add_field(name="Vote", value=f"For: {resolution_data.TOTAL_VOTES_FOR.text}, Against: {resolution_data.TOTAL_VOTES_AGAINST.text}", inline=False)
+                embed.add_field(name="Passed On", value=f"{datetime.date.fromtimestamp(int(resolution_data.IMPLEMENTED.text))}", inline=False)
+
+                await ctx.reply(embed=embed)
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="market", with_app_command=True, description="Display information about the card market")
+    @isLoaded()
+    async def market(self, ctx: commands.Context):
+        await ctx.defer()
+
+        market_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?q=cards+auctions;limit=1000", mode=1).text, "xml")
 
         count = 0
         cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
         notables = []
-        for auction in r.find_all("AUCTION"):
+        for auction in market_data.find_all("AUCTION"):
             count += 1
             cdict[auction.CATEGORY.text] += 1
-        
-        if count < 50:
-            notables.append(f"The market is quiet, with only {count} cards being traded")
-        elif count < 200:
-            notables.append(f"The market is rather busy, there are currently {count} cards available")
-        elif count < 500:
-            notables.append(f"The flood is here, there are {count} cards on the market")
-        elif count > 999:
-            notables.append("I can't even count how many cards are at auction, it's at least 1000")
 
-        if cdict["legendary"] <= 10 and cdict["legendary"] > 0:
+        if count == 0:
+            await ctx.reply("The market is completely empty.")
+
+        if count < 50:
+            notables.append(f"The market is pretty quiet, with only {count} cards being traded")
+        elif count < 200:
+            notables.append(f"The market is getting busy, there are currently {count} cards being traded")
+        elif count < 500:
+            notables.append(f"The flood is here, there are {count} cards being traded")
+        elif count < 1000:
+            notables.append(f"The market is swamped, there are {count} cards being traded")
+        else:
+            notables.append(f"I can't even count how many cards are at auction right now")
+
+        if cdict["legendary"] > 0 and cdict["legendary"] < 10:
             notables.append("and there are a few legendaries for sale")
-        elif cdict["legendary"] > 10:
+        elif cdict["legendary"] >= 10:
             notables.append("and there are a number of legendaries for sale")
         elif cdict["epic"] > 0:
-            notables.append("and there are no legendaries for sale, but at least there are some epics")
+            notables.append("and while there are no legendaries for sale, there are some epics available.")
 
         info = ", ".join(notables)
 
-        await ctx.send(info)
+        await ctx.reply(info)
 
-    @commands.command(aliases=["r"])
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="nation", with_app_command=True, description="Retrieve information about a nation")
     @isLoaded()
-    async def region(self, ctx, *, region):
-        try:
-            reg = region.lower().replace(" ","_")
-            r = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?region={reg}&q=name+power+numnations+delegate+delegatevotes+flag+founder').text, 'xml')
+    async def nation(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
+
+        nat = format_names(name=nation, mode=1)
+        nation_req = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat};q=fullname+motto+flag+region+wa+influence+category+answered+population+firstlogin+dbid+lastlogin+census;scale=65+80;mode=score", mode=1)
+
+        if not nation_req:
+            color = int("2d0001", 16)
+            file = discord.File("./media/exnation.png", filename="image.png")
+            embed=discord.Embed(title=format_names(name=nation, mode=2), url=f"https://www.nationstates.net/page=boneyard?nation={nat}", description=f"'If an item does not appear in our records, it does not exist.'\n-Jocasta Nu\n\nPerhaps the nation you're looking for is in the Boneyard?", color=color)
+            embed.set_thumbnail(url="attachment://image.png")
+            await ctx.reply(file=file, embed=embed)
+        else:
+            nation_data = bs(nation_req.text, "xml")
+
+            # census[0] is the nation's influence value, census[1] is the residency value
+            census = [round(float(score.text), 2) for score in nation_data.CENSUS.find_all("SCORE")]
 
             color = int("2d0001", 16)
+            embed=discord.Embed(title=nation_data.FULLNAME.text, url=f"https://nationstates.net/nation={nat}", description=f'"{nation_data.MOTTO.text}"', color=color)
+            embed.set_thumbnail(url=nation_data.FLAG.text)
+            embed.add_field(name="Region", value=f"[{nation_data.REGION.text}](https://nationstates.net/region={format_names(name=nation_data.REGION.text, mode=1)}) ({census[1]} Days)", inline=True)
+            embed.add_field(name="World Assembly Status", value=nation_data.UNSTATUS.text, inline=True)
+            embed.add_field(name="Influence", value=f"{nation_data.INFLUENCE.text} ({'{:,}'.format(int(census[0]))})", inline=True)
 
-            embed=discord.Embed(title=r.NAME.text, url=f"https://nationstates.net/region={reg}", color=color)
-            embed.set_thumbnail(url=r.FLAG.text)
-            if r.FOUNDER.text != "0":
-                try:
-                    fr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.FOUNDER.text}&q=name').text, 'xml')
-                    embed.add_field(name="Founder", value=f"[{fr.NAME.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
-                except:
-                    embed.add_field(name="Founder (CTE)", value=f"[{r.FOUNDER.text}](https://nationstates.net/nation={r.FOUNDER.text})", inline=True)
+            embed.add_field(name="Category", value=nation_data.CATEGORY.text, inline=True)
+            embed.add_field(name="Issues", value=nation_data.ISSUES_ANSWERED.text, inline=True)
+
+            embed.add_field(name="Population", value=self.millify(nation_data.POPULATION.text), inline=True)
+            fdate = str(datetime.date.fromtimestamp(int(nation_data.FIRSTLOGIN.text)))
+            if fdate in ['1969-12-31', '1970-01-01']:
+                embed.add_field(name="Founded", value="Antiquity", inline=True)
             else:
-                embed.add_field(name="Founder", value="None", inline=True)
-            if r.DELEGATE.text != "0":
-                dr = bs(api_call(1, f'https://www.nationstates.net/cgi-bin/api.cgi?nation={r.DELEGATE.text}&q=name').text, 'xml')
-                embed.add_field(name="Delegate", value=f"[{dr.NAME.text}](https://nationstates.net/nation={r.DELEGATE.text})", inline=True)
-            else:
-                embed.add_field(name="Delegate", value="None", inline=True)
-            embed.add_field(name="Delegate Votes", value=r.DELEGATEVOTES.text, inline=True)
-            embed.add_field(name="World Assembly Power", value=r.POWER.text, inline=True)
-            embed.add_field(name="Population", value=r.NUMNATIONS.text, inline=True)
+                embed.add_field(name="Founded", value=fdate, inline=True)
+            embed.add_field(name="ID", value=nation_data.DBID.text, inline=True)
+            embed.add_field(name="Most Recent Activity", value=f'<t:{int(nation_data.LASTLOGIN.text)}:R>', inline=True)
 
-            await ctx.send(embed=embed)
-        except:
-            await ctx.send("Invalid region, please try again.")
+            await ctx.reply(embed=embed)
+#===================================================================================================#
 
-    @region.error
-    async def region_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a region.")
-        else:
-            logerror(ctx, error)
-
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="nne", with_app_command=True, description="Display a list of World Assembly members in a region that are not endorsing a nation")
     @isLoaded()
-    @commands.bot_has_permissions(attach_files=True)
-    async def activity(self, ctx, *, region):
+    async def nne(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
+
+        nat = format_names(name=nation, mode=1)
+        nation_req = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={nat}&q=region+endorsements", mode=1)
+        
+        if not nation_req:
+            await ctx.reply("I can't find that nation.")
+            return
+
+        region = format_names(name=bs(nation_req.text, 'xml').REGION.text, mode=1)
+
         mydb = connector()
         mycursor = mydb.cursor()
 
-        mycursor.execute(f"SELECT lastlogin FROM nations WHERE region = '{region}'")
-
+        mycursor.execute(f"SELECT name FROM ns.nations WHERE NOT name = '{nat}' AND NOT unstatus = 'Non-member' AND region = '{region}'")
+        
         myresult = mycursor.fetchall()
-
+        
         if not myresult:
-            await ctx.send(f"I can't find the region {region}.")
+            await ctx.reply(f"I can't find anyone in {format_names(name=region, mode=2)} that hasn't endorsed {format_names(name=nat, mode=2)}.")
             return
 
-        Dict = {}
-        today = date.today()
-        fregion = region.replace(" ", "_").lower()
-        path = fregion + "_activity.jpg"
+        endorsements = bs(nation_req.text, "xml").ENDORSEMENTS.text.split(",")
+        nations_not_endorsing = [nation[0] for nation in myresult if nation[0] not in endorsements]
 
-        for x in myresult:
-            days = (today - datetime.date.fromtimestamp(int(x[0]))).days
-            if Dict.get(days) == None:
-                Dict[days] = 1
-            else:
-                Dict[days] += 1
+        # this block creates a list of discord embeds, each containing a list of 20 nations that haven't endorsed the given nation
+        count = 1
+        pages = math.ceil(len(nations_not_endorsing) / 20)
+        nne_pages = []
+        for i in range(0, len(nations_not_endorsing), 20):
+            chunk = nations_not_endorsing[i: i + 20]
+            embed_body = ""
+            for item in chunk:
+                embed_body += f"· [{format_names(name=item, mode=2)}](https://www.nationstates.net/nation={item})\n"
 
-        sortedDict = OrderedDict(sorted(Dict.items()))
-        names = list(sortedDict.keys())
-        values = list(sortedDict.values())
+            color = int("2d0001", 16)
+            embed = discord.Embed(title=f"NNE: {nat.title().replace('_', ' ')}", description=embed_body, color=color)
+            embed.set_footer(text=f"Page {count} of {pages}")
+            count += 1
+            nne_pages.append(embed)
 
-        plt.bar(range(len(sortedDict)), values, tick_label=names)
-        plt.title(f"Days Since Last Activity in {region.title()}")
-        plt.xlabel("Days Since Last Activity")
-        plt.ylabel("Number of Nations")
-        plt.xticks(rotation=60, size=8)
-        plt.savefig(path)
-        plt.clf()
-
-        color = int("2d0001", 16)
-        embed=discord.Embed(title=f'{region.title()} Activity Graph', color=color)
-        file = discord.File(path, filename=path)
-        embed.set_image(url=f"attachment://{path}")
-        await ctx.send(file=file, embed=embed)
-        os.remove(path)
-
-    @activity.error
-    async def activity_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("Sorry, I don't have permission to upload files in this server.")
-        elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please select a nation.") 
+        if len(nne_pages) > 1:
+            view = NNEView(ctx=ctx, nne_pages=nne_pages)
+            view.message = await ctx.reply(embed=nne_pages[0], view=view)
         else:
-            logerror(ctx, error)
+            await ctx.reply(embed=nne_pages[0])
+#===================================================================================================#
 
-    @commands.command()
+#===================================================================================================#
+    @commands.hybrid_command(name="region", with_app_command=True, description="Retrieve information about a region")
     @isLoaded()
-    async def ga(self, ctx, *, id=None):
-        if id == None:
-            r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=resolution").text, 'xml')
-            ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
+    async def region(self, ctx: commands.Context, *, region: str):
+        await ctx.defer()
 
-            color = int("2d0001", 16)
-            embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=ga", description='by {}'.format(ar.NAME.text), color=color)
-            embed.set_thumbnail(url="https://www.nationstates.net/images/ga.jpg")
-            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
-            embed.add_field(name="Voting Ends", value=f"<t:{str(int(r.PROMOTED.text) + 345600)}:R>") 
+        reg = format_names(name=region, mode=1)
+        region_req = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?region={reg}&q=name+power+numnations+delegate+delegatevotes+flag+founder", mode=1)
 
-            await ctx.send(embed=embed)
+        if not region_req:
+            await ctx.reply("That region doesn't exist.")
         else:
-            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa=1&id={id}&q=resolution").text, 'xml')
+            region_data = bs(region_req.text, "xml")
 
             color = int("2d0001", 16)
-            try:
-                r.REPEALED.text
-                embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-            except:
-                embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=1", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-            embed.set_thumbnail(url=f"https://www.nationstates.net/images/ga.jpg")
-            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
-            await ctx.send(embed=embed)
 
-    @ga.error
-    async def ga_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.CommandInvokeError):
-            if ctx.message.content == "!ga":
-                await ctx.send("There is no General Assembly Resolution currently at vote.")
+            embed=discord.Embed(title=region_data.NAME.text, url=f"https://nationstates.net/region={reg}", color=color)
+            embed.set_thumbnail(url=region_data.FLAG.text)
+            if region_data.FOUNDER.text != "0":
+                founder_req = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={region_data.FOUNDER.text}&q=name", mode=1)
+                if founder_req:
+                    founder_data = bs(founder_req.text, "xml")
+                    embed.add_field(name="Founder", value=f"[{founder_data.NAME.text}](https://nationstates.net/nation={region_data.FOUNDER.text})", inline=True)
+                else:
+                    embed.add_field(name="Founder (CTE)", value=f"[{format_names(name=region_data.FOUNDER.text, mode=2)}](https://www.nationstates.net/page=boneyard?nation={region_data.FOUNDER.text})", inline=True)
             else:
-                await ctx.send("I can't find a General Assembly Resolution with that ID.")
-        else:
-            logerror(ctx, error)
+                embed.add_field(name="Founder", value="None", inline=True)
+            if region_data.DELEGATE.text != "0":
+                delegate_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={region_data.DELEGATE.text}&q=name", mode=1).text, "xml")
+                embed.add_field(name="Delegate", value=f"[{delegate_data.NAME.text}](https://nationstates.net/nation={region_data.DELEGATE.text})", inline=True)
+            else:
+                embed.add_field(name="Delegate", value="None", inline=True)
+            embed.add_field(name="Delegate Votes", value=region_data.DELEGATEVOTES.text, inline=True)
+            embed.add_field(name="World Assembly Power", value=region_data.POWER.text, inline=True)
+            embed.add_field(name="Population", value=region_data.NUMNATIONS.text, inline=True)
 
-    @commands.command()
+            await ctx.reply(embed=embed)
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="s1", with_app_command=True, description="Retrieve information about a Season 1 trading card")
     @isLoaded()
-    async def sc(self, ctx, *, id=None):
-        if id == None:
-            r = bs(api_call(1, "https://www.nationstates.net/cgi-bin/api.cgi?wa=2&q=resolution").text, 'xml')
-            ar = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?nation={r.PROPOSED_BY.text}").text, 'xml')
+    async def s1(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
+
+        nat = format_names(name=nation, mode=1)
+        mydb = connector()
+        mycursor = mydb.cursor()
+
+        mycursor.execute(f"SELECT dbid FROM s1 WHERE name = '{nat}'")
+        dbid = mycursor.fetchone()
+
+        if dbid:
+            dbid = dbid[0]
+
+            card_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=1", mode=1).text, 'xml')
+
+            ask = 10000.00
+            bid = 0.00
+            asks = 0
+            bids = 0
+
+            for market in card_data.find_all("MARKET"):
+                if market.TYPE.text == "bid":
+                    bids += 1  
+                    if float(market.PRICE.text) > bid:
+                        bid = float(market.PRICE.text)
+                elif market.TYPE.text == "ask":
+                    asks += 1
+                    if float(market.PRICE.text) < ask:
+                        ask = float(market.PRICE.text)
+
+            if asks == 0:
+                ask = "None"
+            if bids == 0:
+                bid = "None"
 
             color = int("2d0001", 16)
-            embed=discord.Embed(title=r.NAME.text, url="https://www.nationstates.net/page=sc", description='by {}'.format(ar.NAME.text), color=color)
-            embed.set_thumbnail(url="https://www.nationstates.net/images/sc.jpg")
-            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False)
-            embed.add_field(name="Voting Ends", value=f"<t:{str(int(r.PROMOTED.text) + 345600)}:R>") 
+            embed=discord.Embed(title=card_data.NAME.text, url=f"https://www.nationstates.net/page=deck/card={card_data.CARDID.text}/season=1", description=f'"{card_data.SLOGAN.text}"', color=color)
+            embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s1/{card_data.FLAG.text}")
+            embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
+            embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
+            embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=ask, inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=bid, inline=True)
 
-            await ctx.send(embed=embed)
+            await ctx.reply(embed=embed)
         else:
-            r = bs(api_call(1, f"https://www.nationstates.net/cgi-bin/api.cgi?wa=2&id={id}&q=resolution").text, 'xml')
+            await ctx.reply(f"{format_names(name=nat, mode=2)} does not have a Season 1 trading card.")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="s2", with_app_command=True, description="Retrieve information about a Season 2 trading card")
+    @isLoaded()
+    async def s2(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
+
+        nat = format_names(name=nation, mode=1)
+        mydb = connector()
+        mycursor = mydb.cursor()
+
+        mycursor.execute(f"SELECT dbid FROM s2 WHERE name = '{nat}'")
+        dbid = mycursor.fetchone()
+
+        if dbid:
+            dbid = dbid[0]
+
+            card_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=2", mode=1).text, 'xml')
+
+            ask = 10000.00
+            bid = 0.00
+            asks = 0
+            bids = 0
+
+            for market in card_data.find_all("MARKET"):
+                if market.TYPE.text == "bid":
+                    bids += 1  
+                    if float(market.PRICE.text) > bid:
+                        bid = float(market.PRICE.text)
+                elif market.TYPE.text == "ask":
+                    asks += 1
+                    if float(market.PRICE.text) < ask:
+                        ask = float(market.PRICE.text)
+
+            if asks == 0:
+                ask = "None"
+            if bids == 0:
+                bid = "None"
 
             color = int("2d0001", 16)
-            try:
-                r.REPEALED.text
-                embed=discord.Embed(title=f'(REPEALED) {r.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=2", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-            except:
-                embed=discord.Embed(title=r.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=2", description=f'by {r.PROPOSED_BY.text.replace("_", " ").title()}', color=color)
-            embed.set_thumbnail(url=f"https://www.nationstates.net/images/sc.jpg")
-            embed.add_field(name="Category", value=r.CATEGORY.text, inline=True)
-            embed.add_field(name="Vote", value="For: {0}, Against: {1}".format(r.TOTAL_VOTES_FOR.text, r.TOTAL_VOTES_AGAINST.text), inline=False) 
-            await ctx.send(embed=embed)
+            embed=discord.Embed(title=card_data.NAME.text, url=f"https://www.nationstates.net/page=deck/card={card_data.CARDID.text}/season=2", description=f'"{card_data.SLOGAN.text}"', color=color)
+            embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s2/{card_data.FLAG.text}")
+            embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
+            embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
+            embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=ask, inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=bid, inline=True)
 
-    @sc.error
-    async def sc_error(self, ctx, error):
-        if "n" not in get_cogs(ctx.guild.id):
-            return
-        elif isinstance(error, commands.CommandInvokeError):
-            if ctx.message.content == "!sc":
-                await ctx.send("There is no Security Council Resolution currently at vote.")
+            await ctx.reply(embed=embed)
+        else:
+            await ctx.reply(f"{format_names(name=nat, mode=2)} does not have a Season 2 trading card.")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="sc", with_app_command=True, description="Display information about current and historical Security Council resolutions")
+    @isLoaded()
+    async def sc(self, ctx: commands.Context, *, id: int=None):
+        await ctx.defer()
+
+        if not id:
+            resolution_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=2&q=resolution", mode=1).text, "xml")
+            
+            if not resolution_data.find("PROPOSED_BY"):
+                await ctx.reply("There isn't currently a Security Council resolution at vote.")
+                return
             else:
-                await ctx.send("I can't find a Security Council Resoltion with that ID.")
+                author_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={resolution_data.find('PROPOSED_BY').text}", mode=1).text, "xml")
+
+                color = int("2d0001", 16)
+                embed=discord.Embed(title=resolution_data.NAME.text, url="https://www.nationstates.net/page=sc", description=f"by [{author_data.NAME.text}](https://www.nationstates.net/nation={resolution_data.find('PROPOSED_BY').text})", color=color)
+                embed.set_thumbnail(url="https://www.nationstates.net/images/sc.jpg")
+                embed.add_field(name="Category", value=resolution_data.CATEGORY.text, inline=True)
+                embed.add_field(name="Vote", value=f"For: {resolution_data.TOTAL_VOTES_FOR.text}, Against: {resolution_data.TOTAL_VOTES_AGAINST.text}", inline=False)
+                embed.add_field(name="Voting Ends", value=f"<t:{str(int(resolution_data.PROMOTED.text) + 345600)}:R>") 
+
+                await ctx.send(embed=embed)
         else:
-            logerror(ctx, error)
+            resolution_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?wa=2&id={id}&q=resolution", mode=1).text, "xml")
+            
+            if not resolution_data.find("PROPOSED_BY"):
+                await ctx.reply("There isn't a historical resolution with that ID.")
+                return
+            else:
+                color = int("2d0001", 16)
+
+                if resolution_data.find("REPEALED"):
+                    embed=discord.Embed(title=f'(REPEALED) {resolution_data.NAME.text}', url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=2", description=f"by [{resolution_data.PROPOSED_BY.text.replace('_', ' ').title()}](https://www.nationstates.net/nation={resolution_data.find('PROPOSED_BY').text})", color=color)
+                else:
+                    embed=discord.Embed(title=resolution_data.NAME.text, url=f"https://www.nationstates.net/page=WA_past_resolution/id={id}/council=2", description=f"by [{resolution_data.PROPOSED_BY.text.replace('_', ' ').title()}](https://www.nationstates.net/nation={resolution_data.find('PROPOSED_BY').text})", color=color)
+                embed.set_thumbnail(url=f"https://www.nationstates.net/images/sc.jpg")
+                embed.add_field(name="Category", value=resolution_data.CATEGORY.text, inline=True)
+                embed.add_field(name="Vote", value=f"For: {resolution_data.TOTAL_VOTES_FOR.text}, Against: {resolution_data.TOTAL_VOTES_AGAINST.text}", inline=False)
+                embed.add_field(name="Passed On", value=f"{datetime.date.fromtimestamp(int(resolution_data.IMPLEMENTED.text))}", inline=False)
+
+                await ctx.reply(embed=embed)
+#===================================================================================================#
+
+    '''
+    @commands.hybrid_command(name="test", with_app_command=True, description="Testing")
+    async def test(self, ctx: commands.Context):
+        await ctx.defer()
+        await ctx.reply(ctx.guild.id)
+
+
+    @app_commands.command(name="test", description="Testing cogs")
+    async def test(self, interaction: discord.Interaction, name: str):
+        await interaction.response.send_message(f"Hi, {name}!")
+    '''
 
 async def setup(bot):
     await bot.add_cog(nsinfo(bot))
