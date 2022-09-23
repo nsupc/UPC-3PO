@@ -39,6 +39,7 @@ def isUPC():
     return commands.check(predicate)
 
 bot = Bot()
+bot.remove_command("help")
 
 
 @bot.tree.command(name="sync", description="Sync slash commands")

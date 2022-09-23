@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 from the_brain import connector, log, welcome
 from embeds.config_embeds import *
+from embeds.help_embeds import *
 from views.config_views import ConfigView
+from views.help_view import HelpView
 
 load_dotenv()
 
@@ -131,6 +133,32 @@ class config(commands.Cog):
         await user.send(f"{ctx.message.author} said:\n'{feedback}'")
 
         await ctx.reply("Your feedback has been recorded.")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="help", with_app_command=True, description="Display the help menu")
+    @app_commands.choices(
+        set = [
+            Choice(name="Admin", value="admin"),
+            Choice(name="Config", value="config"),
+            Choice(name="NS Info", value="nsinfo"),
+            Choice(name="Verification", value="verification")
+        ]
+    )
+    async def help(self, ctx:commands.Context, set: str):
+        await ctx.defer()
+
+        view = HelpView(ctx=ctx)
+
+        match set:
+            case "admin":
+                await ctx.reply(embed=get_admin_embed(), view=view)
+            case "config":
+                await ctx.reply(embed=get_config_embed(), view=view)
+            case "nsinfo":
+                await ctx.reply(embed=get_nsinfo_embed(), view=view)
+            case "verification":
+                await ctx.reply(embed=get_verification_embed(), view=view)
 #===================================================================================================#
 
 #===================================================================================================#
