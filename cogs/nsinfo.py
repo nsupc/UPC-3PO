@@ -19,8 +19,6 @@ from views.nne_view import NNEView
 
 load_dotenv()
 
-
-#TODO: check if cog is loaded in this server
 #TODO: filter market by rarity
 
 class nsinfo(commands.Cog):

@@ -11,7 +11,7 @@ from views.config_views import ConfigView
 
 load_dotenv()
 
-#TODO: add commands to load and unload cogs
+#TODO: come up with more intuitive buttons for config view
 
 class config(commands.Cog):
     def __init__(self, bot):

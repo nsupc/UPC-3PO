@@ -10,8 +10,6 @@ from the_brain import connector, get_cogs
 
 load_dotenv()
 
-#TODO check if cog is loaded in this server
-
 class admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

@@ -13,8 +13,6 @@ from views.unverify_view import UnverifyView
 
 load_dotenv()
 
-#TODO: check if cog is loaded in server
-
 class verification(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
