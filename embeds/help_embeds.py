@@ -17,7 +17,7 @@ def get_admin_embed():
 #===================================================================================================#
 
 #===================================================================================================#
-def get_config_embed():
+def get_config_embed_help():
     embed = discord.Embed(title="Config", color=color)
     embed.add_field(name="Channel", value="Set, view, or delete the server's welcome or log channel\nRequired Permissions: Manage Server\nUsage: /channel {set/view/delete} {welcome/log} {optional: channel}", inline=False)
     embed.add_field(name="Cog", value="Load or unload a set of commands in the server\nRequired Permissions: Manage Server\nUsage: /cog {load/unload} {Admin/NS Info/Verification}", inline=False)
