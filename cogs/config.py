@@ -334,7 +334,7 @@ class config(commands.Cog):
                     await log(bot=self.bot, id=ctx.guild.id, action=f"The welcome message was set by {ctx.author}")
                     await ctx.reply(f"Set welcome message")
                 else:
-                    await ctx.reply("Please specify a role.")
+                    await ctx.reply("Please specify a message.")
             case "view":
                 await ctx.reply(embed=get_message_embed(author_id=ctx.author.id, guild_id=ctx.guild.id))
             case "delete":
