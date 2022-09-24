@@ -23,8 +23,8 @@ class moderation(commands.Cog):
     #Events
     @commands.Cog.listener()
     async def on_ready(self):
-        if not self.check_automod.is_running():
-            self.check_automod.start()
+        if not self.automod_listener.is_running():
+            self.automod_listener.start()
     '''
 
     #Checks
@@ -35,7 +35,7 @@ class moderation(commands.Cog):
 
 #===================================================================================================#
     @tasks.loop(minutes=1)
-    async def check_automod(self):
+    async def automod_listener(self):
         moderation_channel = self.bot.get_channel(1022638032295297124)
 
         notices_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=terrible_purpose&q=notices", mode=2).text, "xml")
@@ -62,7 +62,7 @@ class moderation(commands.Cog):
 #===================================================================================================#
 
 #===================================================================================================#
-    @commands.hybrid_command(name="automod")
+    @commands.hybrid_command(name="automod", with_app_command=True, description="Start or stop the automod")
     @commands.has_permissions(administrator=True)
     @isTestServer()
     @app_commands.choices(
@@ -76,14 +76,14 @@ class moderation(commands.Cog):
 
         match action:
             case "start":
-                if not self.check_automod.is_running():
-                    self.check_automod.start()
+                if not self.automod_listener.is_running():
+                    self.automod_listener.start()
                     await ctx.reply("Automod started.")
                 else:
                     await ctx.reply("Automod is already running.")
             case "stop":
-                if self.check_automod.is_running():
-                    self.check_automod.cancel()
+                if self.automod_listener.is_running():
+                    self.automod_listener.cancel()
                     await ctx.reply("Automod stopped.")
                 else:
                     await ctx.reply("Automod already stopped.")

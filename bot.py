@@ -20,7 +20,7 @@ class Bot(commands.Bot):
         super().__init__(command_prefix=get_prefix, intents=intents)
 
     async def setup_hook(self):
-        cogs = ["nsinfo", "admin", "moderation", "verification", "config"]
+        cogs = ["nsinfo", "admin", "moderation", "verification", "config", "balder"]
         for cog in cogs:
             try:
                 await self.load_extension(f"cogs.{cog}")
