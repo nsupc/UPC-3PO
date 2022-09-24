@@ -7,6 +7,7 @@ def get_config_embed():
     color = int("2d0001", 16)
     embed = discord.Embed(title="Config", color=color)
     embed.add_field(name="Cogs", value="Enable or disable cogs for this server.", inline=False)
+    embed.add_field(name="Command Prefix", value="Set or view UPC-3PO's command prefix", inline=False)
     embed.add_field(name="Log Channel", value="Set a server log channel.", inline=False)
     embed.add_field(name="Welcome Channel", value="Set a channel to welcome new members.", inline=False)
     embed.add_field(name="Welcome Message", value="Set a message to send when a new member joins.", inline=False)
@@ -15,6 +16,21 @@ def get_config_embed():
     embed.add_field(name="Resident Role", value="Set or delete this server's Resident role.", inline=False)
     embed.add_field(name="Visitor Role", value="Set or delete this server's Visitor role.", inline=False)
     embed.add_field(name="Verified User Role", value="Set or delete this server's Registered User role.", inline=False)
+
+    return embed
+#===================================================================================================#
+
+#===================================================================================================#
+def get_prefix_embed(guild_id):
+    color = int("2d0001", 16)
+    embed = discord.Embed(title="Command Prefix", description="Set or view UPC-3PO's command prefix", color=color)
+
+    mydb = connector()
+    mycursor = mydb.cursor()
+    mycursor.execute(f"SELECT prefix FROM guild WHERE serverid = '{guild_id}' LIMIT 1")
+    prefix = mycursor.fetchone()[0]
+
+    embed.add_field(name="Prefix", value=prefix)
 
     return embed
 #===================================================================================================#

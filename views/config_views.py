@@ -1,6 +1,7 @@
 import discord
 
 from discord.ui import View
+from modals.set_prefix_modal import SetPrefixModal
 
 from the_brain import connector, log
 from embeds.config_embeds import *
@@ -21,6 +22,7 @@ class ConfigView(View):
         placeholder = "Please choose an option.",
         options=[
         discord.SelectOption(label="Cogs", value="cogs"),
+        discord.SelectOption(label="Prefix", value="prefix"),
         discord.SelectOption(label="Log Channel", value="log"),
         discord.SelectOption(label="Welcome Channel", value="welcome"),
         discord.SelectOption(label="Welcome Message", value="message"),
@@ -38,6 +40,8 @@ class ConfigView(View):
         response = select.values[0]
 
         match response:
+            case "prefix":
+                await interaction.response.edit_message(embed=get_prefix_embed(guild_id=interaction.guild_id), view=PrefixView(bot=self.bot, ctx=self.ctx, message=self.message))
             case "cogs":
                 await interaction.response.edit_message(embed=get_cog_embed(guild_id=interaction.guild_id), view=CogView(bot=self.bot, ctx=self.ctx, message=self.message))
             case "log":
@@ -77,6 +81,41 @@ class ConfigView(View):
 
         await self.message.edit(view=self)
         self.stop()
+#===================================================================================================#
+
+#===================================================================================================#
+class PrefixView(View):
+    def __init__(self, bot, ctx, message):
+        super().__init__()
+        self.bot = bot
+        self.ctx = ctx
+        self.message = message
+
+
+    @discord.ui.button(label="✓", style=discord.ButtonStyle.success)
+    async def confirm_callback(self, interaction: discord.Interaction, button):
+        if interaction.user != self.ctx.message.author:
+            return
+
+        await interaction.response.send_modal(SetPrefixModal(bot=self.bot, message=self.message))
+
+
+    @discord.ui.button(label="✖", style=discord.ButtonStyle.danger)
+    async def cancel_callback(self, interaction: discord.Interaction, button):
+        if interaction.user != self.ctx.message.author:
+            return
+
+        await interaction.response.edit_message(embed=get_config_embed(), view=ConfigView(bot=self.bot, ctx=self.ctx, message=self.message))
+
+
+    async def on_timeout(self):
+        self.value = None
+        for child in self.children:
+            child.disabled = True
+
+        await self.message.edit(view=self)
+        self.stop()
+
 #===================================================================================================#
 
 #===================================================================================================#
