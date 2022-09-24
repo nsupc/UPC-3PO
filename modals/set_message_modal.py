@@ -12,6 +12,7 @@ class SetMessageModal(discord.ui.Modal, title="Set Region"):
 
     welcome_message = discord.ui.TextInput(
         max_length=500,
+        style=discord.TextStyle.long,
         label="Welcome Message",
         placeholder="The welcome message for your server"
     )
