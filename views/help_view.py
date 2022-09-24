@@ -29,7 +29,7 @@ class HelpView(View):
             case "admin":
                 await interaction.response.edit_message(embed=get_admin_embed(), view=self)
             case "config":
-                await interaction.response.edit_message(embed=get_config_embed(), view=self)
+                await interaction.response.edit_message(embed=get_config_embed_help(), view=self)
             case "nsinfo":
                 await interaction.response.edit_message(embed=get_nsinfo_embed(), view=self)
             case "verification":
