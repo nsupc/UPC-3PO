@@ -1,6 +1,6 @@
 #@app_commands.guilds(test_server)
 
-#TODO: WA Ping Listener & start/stop command, NNE Dispatch, Join WA Dispatch
+#TODO: NNE Dispatch, Join WA Dispatch
 import datetime
 import discord
 import os
@@ -13,6 +13,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from the_brain import api_call, format_names
+from modals.balder_recommendation_modal import BalderRecommendationModal
 
 load_dotenv()
 ID = int(os.getenv("ID"))
@@ -113,6 +114,25 @@ class balder(commands.Cog):
                     await ctx.reply("Listener stopped.")
                 else:
                     await ctx.reply("Listener already stopped.")
+#===================================================================================================#
+
+#===================================================================================================#
+    @app_commands.command(name="brec", description="Post a WA Recommendation to Balder's RMB")
+    @isTestServer()
+    @app_commands.choices(
+        council = [
+            Choice(name="GA", value="1"),
+            Choice(name="SC", value="2")
+        ],
+        position = [
+            Choice(name="For", value="For"),
+            Choice(name="Against", value="Against"),
+            Choice(name="Abstain", value="Abstain")
+        ]
+    )
+    async def brec(self, interaction: discord.Interaction, council: str, position: str):
+        resolution_name = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?wa={council}&q=resolution", mode=1).text, "xml").NAME.text
+        await interaction.response.send_modal(BalderRecommendationModal(bot=self.bot, council=council, position=position, title=resolution_name))
 #===================================================================================================#
 async def setup(bot):
     await bot.add_cog(balder(bot))

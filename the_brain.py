@@ -22,8 +22,9 @@ def api_call(url: str, mode: int, data: dict = None, pin: str = None):
     # Mode 2 is for private requests
     elif(mode==2):
         headers["X-Password"] = os.getenv("NATION_AUTH")
+        headers["X-Pin"] = pin
 
-        r = requests.get(url, headers=headers)
+        r = requests.post(url, headers=headers, data=data)
 
     if r.status_code == 404:
         return None
