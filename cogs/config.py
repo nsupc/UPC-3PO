@@ -58,6 +58,49 @@ class config(commands.Cog):
         mycursor.execute(f'DELETE FROM guild WHERE serverid = "{guild.id}"')
         mydb.commit()
 
+#===================================================================================================#
+    @commands.hybrid_command(name="channel", with_app_command=True, description="Specify a log or welcome channel")
+    @commands.has_permissions(manage_guild=True)
+    @app_commands.choices(
+        action = [
+            Choice(name="set", value="set"),
+            Choice(name="view", value="view"),
+            Choice(name="delete", value="delete")
+        ],
+        channel_type = [
+            Choice(name="welcome", value="welcomechannel"),
+            Choice(name="log", value="logchannel"),
+        ]
+    )
+    async def channel(self, ctx: commands.Context, action: str, channel_type: str, channel: discord.TextChannel = None):
+        await ctx.defer()
+
+        mydb = connector()
+        mycursor = mydb.cursor()
+
+        match action:
+            case "set":
+                if channel:
+                    mycursor.execute(f'UPDATE guild SET {channel_type} = "{channel.id}" WHERE serverid = "{ctx.guild.id}"')
+
+                    await log(bot=self.bot, id=ctx.guild.id, action=f"{channel.mention} was set as the {channel_type} by {ctx.author}")
+                    await ctx.reply(f"{channel.mention} has been set as the {channel_type}.")
+                else: 
+                    await ctx.reply("Please specify a channel")
+            case "view":
+                if channel_type == "welcomechannel":
+                    await ctx.reply(embed=get_welcome_embed(bot=self.bot, guild_id=ctx.guild.id))
+                elif channel_type == "logchannel":
+                    await ctx.reply(embed=get_log_embed(bot=self.bot, guild_id=ctx.guild.id))
+            case "delete":
+
+                mycursor.execute(f'UPDATE guild SET {channel_type} = null WHERE serverid = "{ctx.guild.id}"')
+
+                await log(bot=self.bot, id=ctx.guild.id, action=f"The {channel_type} was removed by {ctx.author}")
+                await ctx.reply(f"The {channel_type} has been removed.")
+
+        mydb.commit()
+#===================================================================================================#
 
 #===================================================================================================#
     @commands.hybrid_command(name="config", with_app_command=True, description="Configure UPC-3PO")
@@ -154,7 +197,7 @@ class config(commands.Cog):
             case "admin":
                 await ctx.reply(embed=get_admin_embed(), view=view)
             case "config":
-                await ctx.reply(embed=get_config_embed(), view=view)
+                await ctx.reply(embed=get_config_embed_help(), view=view)
             case "nsinfo":
                 await ctx.reply(embed=get_nsinfo_embed(), view=view)
             case "verification":
@@ -170,47 +213,28 @@ class config(commands.Cog):
 #===================================================================================================#
 
 #===================================================================================================#
-    @commands.hybrid_command(name="channel", with_app_command=True, description="Specify a log or welcome channel")
+    @commands.hybrid_command(name="prefix", with_app_command=True, description="Set or view UPC-3PO's command prefix")
     @commands.has_permissions(manage_guild=True)
     @app_commands.choices(
         action = [
             Choice(name="set", value="set"),
             Choice(name="view", value="view"),
-            Choice(name="delete", value="delete")
         ],
-        channel_type = [
-            Choice(name="welcome", value="welcomechannel"),
-            Choice(name="log", value="logchannel"),
-        ]
     )
-    async def channel(self, ctx: commands.Context, action: str, channel_type: str, channel: discord.TextChannel = None):
+    async def prefix(self, ctx:commands.Context, action: str, prefix: str = None):
         await ctx.defer()
-
-        mydb = connector()
-        mycursor = mydb.cursor()
 
         match action:
             case "set":
-                if channel:
-                    mycursor.execute(f'UPDATE guild SET {channel_type} = "{channel.id}" WHERE serverid = "{ctx.guild.id}"')
+                mydb = connector()
+                mycursor = mydb.cursor()
+                mycursor.execute(f"UPDATE guild SET prefix = '{prefix[:5]}' WHERE serverid = '{ctx.guild.id}'")
+                mydb.commit()
 
-                    await log(bot=self.bot, id=ctx.guild.id, action=f"{channel.mention} was set as the {channel_type} by {ctx.author}")
-                    await ctx.reply(f"{channel.mention} has been set as the {channel_type}.")
-                else: 
-                    await ctx.reply("Please specify a channel")
+                await ctx.reply(f"Command prefix changed to '{prefix[:5]}'")
+                await log(bot=self.bot, id=ctx.guild.id, action=f"The command prefix was changed to {prefix[:5]} by {ctx.author}")
             case "view":
-                if channel_type == "welcomechannel":
-                    await ctx.reply(embed=get_welcome_embed(bot=self.bot, guild_id=ctx.guild.id))
-                elif channel_type == "logchannel":
-                    await ctx.reply(embed=get_log_embed(bot=self.bot, guild_id=ctx.guild.id))
-            case "delete":
-
-                mycursor.execute(f'UPDATE guild SET {channel_type} = null WHERE serverid = "{ctx.guild.id}"')
-
-                await log(bot=self.bot, id=ctx.guild.id, action=f"The {channel_type} was removed by {ctx.author}")
-                await ctx.reply(f"The {channel_type} has been removed.")
-
-        mydb.commit()
+                await ctx.reply(embed=get_prefix_embed(guild_id=ctx.guild.id))
 #===================================================================================================#
 
 #===================================================================================================#
