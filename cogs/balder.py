@@ -64,7 +64,7 @@ class balder(commands.Cog):
                 elif "out" in message_text and nation in watchers:
                     watchers.remove(nation)
 
-        f = open("logs\watchers.txt", "w")
+        f = open("logs/watchers.txt", "w")
         f.write(",".join(watchers))
         f.close()
 
