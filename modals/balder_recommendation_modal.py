@@ -1,4 +1,5 @@
 import discord
+import os
 
 from bs4 import BeautifulSoup as bs
 
@@ -21,7 +22,7 @@ class BalderRecommendationModal(discord.ui.Modal, title="Recommendation"):
     async def on_submit(self, modal_interaction: discord.Interaction):
         await modal_interaction.response.defer()
 
-        f = open("logs\watchers.txt", "r")
+        f = open("logs/watchers.txt", "r")
         watchers = [f"[nation]{watcher}[/nation]" for watcher in f.read().split(",")]
         f.close()
 
@@ -36,13 +37,13 @@ class BalderRecommendationModal(discord.ui.Modal, title="Recommendation"):
             'mode': 'prepare'
         }
 
-        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=2, data=data)
+        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
 
-        pin = prep_request.headers["X-Pin"]
+        os.environ["UPCY-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
         data['token'] = bs(prep_request.text, "xml").find_all("SUCCESS")
         data['mode'] = "execute"
 
-        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=2, data=data, pin=pin)
+        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
 
         await modal_interaction.followup.send("Recommendation Posted!")
 

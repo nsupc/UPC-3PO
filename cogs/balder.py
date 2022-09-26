@@ -22,13 +22,12 @@ class balder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    '''
     #Events
     @commands.Cog.listener()
     async def on_ready(self):
+        os.environ["UPCY-X-Pin"] = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=ping", mode=2).headers['X-Pin']
         if not self.wa_listener.is_running():
             self.wa_listener.start()
-    '''
 
     #Checks
     def isTestServer():
@@ -46,13 +45,14 @@ class balder(commands.Cog):
     async def wa_listener(self):
         maintenance_channel = self.bot.get_channel(1022638032295297124)
 
-        f = open("logs\watchers.txt", "r")
+        f = open("logs/watchers.txt", "r")
         watchers = [watcher for watcher in f.read().split(",")]
         f.close()
 
-        notices_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=notices", mode=2).text, "xml")
+        notices_data = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=notices", mode=2, pin=os.getenv("UPCY-X-Pin"))
+        os.environ["UPCY-X-Pin"] = notices_data.headers.get("X-Pin") if notices_data.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
 
-        for notice in notices_data.find_all("NOTICE"):
+        for notice in bs(notices_data.text, "xml").find_all("NOTICE"):
             if notice.find("NEW") and notice.TYPE.text == "RMB" and re.search("(?<==).+?(?=/)", notice.URL.text).group(0) == "hesperides":
                 message_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?region=hesperides&q=messages;limit=1;id={re.search('(?<=id=).+?(?=#)', notice.URL.text).group(0)}", mode=1).text, "xml")
 
