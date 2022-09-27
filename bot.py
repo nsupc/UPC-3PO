@@ -20,7 +20,7 @@ class Bot(commands.Bot):
         super().__init__(command_prefix=get_prefix, intents=intents)
 
     async def setup_hook(self):
-        cogs = ["nsinfo", "admin", "moderation", "verification", "config", "balder"]
+        cogs = ["nsinfo", "admin", "moderation", "verification", "config", "balder", "wa_notifications"]
         for cog in cogs:
             try:
                 await self.load_extension(f"cogs.{cog}")
@@ -46,9 +46,7 @@ bot.remove_command("help")
 @isUPC()
 async def sync(interaction: discord.Interaction):
     await interaction.response.defer()
-
-    await bot.tree.sync()
-
+    await bot.setup_hook()
     await interaction.followup.send("Commands synced.")
 
 
@@ -58,14 +56,14 @@ async def sync(interaction: discord.Interaction):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
-    Choice(name="Moderation", value="moderation"),
-    Choice(name="Balder", value="balder"),
+    Choice(name="moderation", value="moderation"),
+    Choice(name="balder", value="balder"),
+    Choice(name="quorum listener", value="wa_notifications"),
 ])
 @isUPC()
 async def load(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
     await bot.load_extension(f"cogs.{cog.lower()}")
-    await bot.tree.sync()
     await interaction.followup.send(f"{cog.title()} has been loaded.")
 
 
@@ -75,14 +73,14 @@ async def load(interaction: discord.Interaction, cog: str):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
-    Choice(name="Moderation", value="moderation"),
-    Choice(name="Balder", value="balder"),
+    Choice(name="moderation", value="moderation"),
+    Choice(name="balder", value="balder"),
+    Choice(name="quorum listener", value="wa_notifications"),
 ])
 @isUPC()
 async def unload(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
     await bot.unload_extension(f"cogs.{cog.lower()}")
-    await bot.tree.sync()
     await interaction.followup.send(f"{cog.title()} has been unloaded.")
 
 
@@ -92,8 +90,9 @@ async def unload(interaction: discord.Interaction, cog: str):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
-    Choice(name="Moderation", value="moderation"),
-    Choice(name="Balder", value="balder"),
+    Choice(name="moderation", value="moderation"),
+    Choice(name="balder", value="balder"),
+    Choice(name="quorum listener", value="wa_notifications"),
 ])
 @isUPC()
 async def reload(interaction: discord.Interaction, cog: str):
