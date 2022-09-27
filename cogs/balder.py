@@ -1,4 +1,3 @@
-#TODO: NNE Dispatch, Join WA Dispatch
 import datetime
 import discord
 import os
@@ -11,7 +10,7 @@ from discord.app_commands import Choice
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
-from the_brain import api_call, format_names
+from the_brain import api_call
 from modals.balder_recommendation_modal import BalderRecommendationModal
 
 load_dotenv()
