@@ -58,6 +58,8 @@ async def sync(interaction: discord.Interaction):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
+    Choice(name="Moderation", value="moderation"),
+    Choice(name="Balder", value="balder"),
 ])
 @isUPC()
 async def load(interaction: discord.Interaction, cog: str):
@@ -73,6 +75,8 @@ async def load(interaction: discord.Interaction, cog: str):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
+    Choice(name="Moderation", value="moderation"),
+    Choice(name="Balder", value="balder"),
 ])
 @isUPC()
 async def unload(interaction: discord.Interaction, cog: str):
@@ -88,6 +92,8 @@ async def unload(interaction: discord.Interaction, cog: str):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
+    Choice(name="Moderation", value="moderation"),
+    Choice(name="Balder", value="balder"),
 ])
 @isUPC()
 async def reload(interaction: discord.Interaction, cog: str):
