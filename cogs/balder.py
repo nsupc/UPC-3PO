@@ -2,6 +2,7 @@
 import datetime
 import discord
 import os
+import random
 import re
 
 from bs4 import BeautifulSoup as bs
@@ -21,7 +22,6 @@ class balder(commands.Cog):
         self.bot = bot
 
     async def nne_func(self):
-        maintenance_channel = self.bot.get_channel(1022638032295297124)
         message = "Greetings! If you are included in this dispatch, then we would like to request that you [u][b]consider endorsing Delegate [nation]North East Somerset[/nation][/b][/u].\n\n[u][b]Endorsing Delegate [nation]North East Somerset[/nation][/b][/u] is important for safeguarding our region against external threats and ensuring the continuation of our government.\n\nAdditionally, if you [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u], your nation gets one step closer to becoming a [url=/page=dispatch/id=1009325]Housecarl of Balder[/url]. You can use this link to learn more about the benefits for the region [i]and[/i] your nation that come from being a Housecarl.\n\nThank you in advance for choosing to [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u]!\n\n[spoiler=Nations currently not endorsing Delegate [nation]North East Somerset[/nation]]@@NATIONS@@[/spoiler]\n\n[background-block=#304a80][align=center][color=#304a80]*[/color]\n[img]http://i.imgur.com/05eozti.png?1[/img]\n[b][url=/region=balder][color=#ffffff]Region[/color][/url] [color=#ffffff]🞜[/color] [url=http://balder.boards.net][color=#ffffff]Forum[/color][/url] [color=#ffffff]🞜[/color] [url=https://discord.gg/E3hr3bX][color=#ffffff]Discord[/color][/url][/b]\n[color=#304a80]*[/color][/align][/background-block]"
         today = datetime.date.today()
 
@@ -48,12 +48,20 @@ class balder(commands.Cog):
         data['token'] = bs(prep_request.text, "xml").find_all("SUCCESS")
         data['mode'] = "execute"
 
-        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        #execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
 
-        timestamp = int(datetime.datetime.now().timestamp())
+        os.environ["NNE-Timestamp"] = str(int(datetime.datetime.now().timestamp()))
+        await self.update_status()
+
+    async def update_status(self):
+        '''Key 0: WA Listener, Key 1: NNE, Key 2: Join the WA'''
+        maintenance_channel = self.bot.get_channel(1022638032295297124)
+
         message = await maintenance_channel.fetch_message(1023257199327330344)
         embed_data = message.embeds[0].to_dict()
-        embed_data['fields'][1]["value"] = f'<t:{timestamp}:f> -- <t:{timestamp}:R>'
+        embed_data['fields'][0]["value"] = f'<t:{os.getenv("Listener-Timestamp")}:f> -- <t:{os.getenv("Listener-Timestamp")}:R>' if os.getenv("Listener-Timestamp") else embed_data['fields'][0]["value"]
+        embed_data['fields'][1]["value"] = f'<t:{os.getenv("NNE-Timestamp")}:f> -- <t:{os.getenv("NNE-Timestamp")}:R>' if os.getenv("NNE-Timestamp") else embed_data['fields'][1]["value"]
+        embed_data['fields'][2]["value"] = f'<t:{os.getenv("Join-The-WA-Timestamp")}:f> -- <t:{os.getenv("Join-The-WA-Timestamp")}:R>' if os.getenv("Join-The-WA-Timestamp") else embed_data['fields'][2]["value"]
         embed = discord.Embed.from_dict(embed_data)
         await message.edit(embed=embed)
 
@@ -61,6 +69,8 @@ class balder(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         os.environ["UPCY-X-Pin"] = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=ping", mode=2).headers['X-Pin']
+        if not self.join_the_wa.is_running():
+            self.join_the_wa.start()
         if not self.wa_listener.is_running():
             self.wa_listener.start()
         if not self.scheduled_nne.is_running():
@@ -84,10 +94,42 @@ class balder(commands.Cog):
 #===================================================================================================#
 
 #===================================================================================================#
+    @tasks.loop(hours=24)
+    async def join_the_wa(self):
+        message = "Greetings! If you are included in this dispatch, then we would like to request that you [u][b]consider joining the World Assembly and endorsing Delegate [nation]North East Somerset[/nation][/b][/u].\n\n[u][b]Endorsing Delegate [nation]North East Somerset[/nation][/b][/u] is important for safeguarding our region against external threats and ensuring the continuation of our government. More information about [region]Balder[/region]'s World Assembly Expedition can be found [url=https://www.nationstates.net/page=dispatch/id=1009320]here[/url]. \n\nAdditionally, if you [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u], your nation gets one step closer to becoming a [url=/page=dispatch/id=1009325]Housecarl of Balder[/url]. You can use this link to learn more about the benefits for the region [i]and[/i] your nation that come from being a Housecarl.\n\nThank you in advance for choosing to [u][b]endorse Delegate [nation]North East Somerset[/nation][/b][/u]!\n\n[spoiler=Nations currently not endorsing Delegate [nation]North East Somerset[/nation]]@@NATIONS@@[/spoiler]\n\n[background-block=#304a80][align=center][color=#304a80]*[/color]\n[img]http://i.imgur.com/05eozti.png?1[/img]\n[b][url=/region=balder][color=#ffffff]Region[/color][/url] [color=#ffffff]?[/color] [url=http://balder.boards.net][color=#ffffff]Forum[/color][/url] [color=#ffffff]?[/color] [url=https://discord.gg/E3hr3bX][color=#ffffff]Discord[/color][/url][/b]\n[color=#304a80]*[/color][/align][/background-block]"
+        today = datetime.date.today()
+
+        all_wa_nations = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=members", mode=1).text, "xml").MEMBERS.text.split(",")
+        all_balder_nations = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?region=balder&q=nations", mode=1).text, "xml").NATIONS.text.split(":")
+
+        non_was = random.sample([f"[nation]{nation}[nation]" for nation in all_balder_nations if nation not in all_wa_nations], 250)
+
+        data = {
+            "nation": "UPCY",
+            "c": "dispatch",
+            "dispatch": "add",
+            "title": f"Join the World Assembly! {today.strftime('%B %d, %Y')}",
+            "text": message.replace("@@NATIONS@@", ", ".join(non_was[:-1]) + ", and " + non_was[-1]),
+            "category": "3",
+            "subcategory": "385",
+            "mode": "prepare"
+        }
+
+        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+
+        os.environ["UPCY-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
+        data['token'] = bs(prep_request.text, "xml").find_all("SUCCESS")
+        data['mode'] = "execute"
+
+        #execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+
+        os.environ["Join-The-WA-Timestamp"] = str(int(datetime.datetime.now().timestamp()))
+        await self.update_status()
+#===================================================================================================#
+
+#===================================================================================================#
     @tasks.loop(hours=1)
     async def wa_listener(self):
-        maintenance_channel = self.bot.get_channel(1022638032295297124)
-
         f = open("logs/watchers.txt", "r")
         watchers = [watcher for watcher in f.read().split(",")]
         f.close()
@@ -111,12 +153,8 @@ class balder(commands.Cog):
         f.write(",".join(watchers))
         f.close()
 
-        timestamp = int(datetime.datetime.now().timestamp())
-        message = await maintenance_channel.fetch_message(1023257199327330344)
-        embed_data = message.embeds[0].to_dict()
-        embed_data['fields'][0]["value"] = f'<t:{timestamp}:f> -- <t:{timestamp}:R>'
-        embed = discord.Embed.from_dict(embed_data)
-        await message.edit(embed=embed)
+        os.environ["Listener-Timestamp"] = str(int(datetime.datetime.now().timestamp()))
+        await self.update_status()
 #===================================================================================================#
 
 #===================================================================================================#
@@ -142,7 +180,8 @@ class balder(commands.Cog):
         ],
         task = [
             Choice(name="RMB Listener", value="listener"),
-            Choice(name="Scheduled NNE", value="nne")
+            Choice(name="Scheduled NNE", value="nne"),
+            Choice(name="Join the WA", value="wa")
         ]
     )
     async def listener(self, ctx:commands.Context, action: str, task: str):
@@ -163,6 +202,12 @@ class balder(commands.Cog):
                             await ctx.reply("Scheduled NNE started.")
                         else:
                             await ctx.reply("Scheduled NNE is already running.")
+                    case "wa":
+                        if not self.join_the_wa.is_running():
+                            self.join_the_wa.start()
+                            await ctx.reply("Join the WA started.")
+                        else:
+                            await ctx.reply("Join the WA is already running.")
             case "stop":
                 match task:
                     case "listener":
@@ -177,6 +222,12 @@ class balder(commands.Cog):
                             await ctx.reply("Scheduled NNE stopped.")
                         else:
                             await ctx.reply("Scheduled NNE already stopped.")
+                    case "wa":
+                        if self.join_the_wa.is_running():
+                            self.join_the_wa.cancel()
+                            await ctx.reply("Join the WA stopped.")
+                        else:
+                            await ctx.reply("Join the WA already stopped.")
 #===================================================================================================#
 
 #===================================================================================================#
