@@ -15,6 +15,7 @@ from modals.balder_recommendation_modal import BalderRecommendationModal
 
 load_dotenv()
 ID = int(os.getenv("ID"))
+ENVIRONMENT = os.getenv("CURRENT_ENVIRONMENT")
 
 class balder(commands.Cog):
     def __init__(self, bot):
@@ -28,10 +29,10 @@ class balder(commands.Cog):
         all_wa_nations = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=members", mode=1).text, "xml").MEMBERS.text.split(",")
         all_balder_nations = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?region=balder&q=nations", mode=1).text, "xml").NATIONS.text.split(":")
 
-        nations_not_endorsing = [f"[nation]{nation}[nation]" for nation in all_balder_nations if nation in all_wa_nations and nation not in delegate_endorsers and nation != "north_east_somerset"]
+        nations_not_endorsing = [f"[nation]{nation}[{'/' if ENVIRONMENT == 'prod' else ''}nation]" for nation in all_balder_nations if nation in all_wa_nations and nation not in delegate_endorsers and nation != "north_east_somerset"]
 
         data = {
-            "nation": "UPCY",
+            "nation": os.getenv("BALDER_WA_NATION"),
             "c": "dispatch",
             "dispatch": "add",
             "title": f"Nations Not Endorsing Delegate North East Somerset, {today.strftime('%B %d, %Y')}",
@@ -41,22 +42,22 @@ class balder(commands.Cog):
             "mode": "prepare"
         }
 
-        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("Balder-WA-X-Pin"))
 
-        os.environ["UPCY-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
+        os.environ["Balder-WA-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["Balder-WA-X-Pin"]
         data['token'] = bs(prep_request.text, "xml").find_all("SUCCESS")
         data['mode'] = "execute"
 
-        #execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("Balder-WA-X-Pin"))
 
         os.environ["NNE-Timestamp"] = str(int(datetime.datetime.now().timestamp()))
         await self.update_status()
 
     async def update_status(self):
         '''Key 0: WA Listener, Key 1: NNE, Key 2: Join the WA'''
-        maintenance_channel = self.bot.get_channel(1022638032295297124)
+        maintenance_channel = self.bot.get_channel(int(os.getenv("BALDER_WA_CHANNEL")))
 
-        message = await maintenance_channel.fetch_message(1023257199327330344)
+        message = await maintenance_channel.fetch_message(int(os.getenv("BALDER_WA_STATUS_MESSAGE")))
         embed_data = message.embeds[0].to_dict()
         embed_data['fields'][0]["value"] = f'<t:{os.getenv("Listener-Timestamp")}:f> -- <t:{os.getenv("Listener-Timestamp")}:R>' if os.getenv("Listener-Timestamp") else embed_data['fields'][0]["value"]
         embed_data['fields'][1]["value"] = f'<t:{os.getenv("NNE-Timestamp")}:f> -- <t:{os.getenv("NNE-Timestamp")}:R>' if os.getenv("NNE-Timestamp") else embed_data['fields'][1]["value"]
@@ -67,18 +68,18 @@ class balder(commands.Cog):
     #Events
     @commands.Cog.listener()
     async def on_ready(self):
-        os.environ["UPCY-X-Pin"] = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=ping", mode=2).headers['X-Pin']
-        if not self.join_the_wa.is_running():
-            self.join_the_wa.start()
-        if not self.wa_listener.is_running():
-            self.wa_listener.start()
-        if not self.scheduled_nne.is_running():
-            self.scheduled_nne.start()
+        os.environ["Balder-WA-X-Pin"] = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={os.getenv('BALDER_WA_NATION')}&q=ping", mode=2).headers['X-Pin']
+        #if not self.join_the_wa.is_running():
+        #    self.join_the_wa.start()
+        #if not self.wa_listener.is_running():
+        #    self.wa_listener.start()
+        #if not self.scheduled_nne.is_running():
+        #    self.scheduled_nne.start()
 
     #Checks
-    def isTestServer():
+    def isWAChannel():
         async def predicate(ctx):
-            return ctx.guild.id == 1022638031838134312
+            return ctx.channel.id == int(os.getenv("BALDER_WA_CHANNEL"))
         return commands.check(predicate)
 
     def isUPC():
@@ -101,10 +102,10 @@ class balder(commands.Cog):
         all_wa_nations = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=members", mode=1).text, "xml").MEMBERS.text.split(",")
         all_balder_nations = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?region=balder&q=nations", mode=1).text, "xml").NATIONS.text.split(":")
 
-        non_was = random.sample([f"[nation]{nation}[nation]" for nation in all_balder_nations if nation not in all_wa_nations], 250)
+        non_was = random.sample([f"[nation]{nation}[{'/' if ENVIRONMENT == 'prod' else ''}nation]" for nation in all_balder_nations if nation not in all_wa_nations], 250)
 
         data = {
-            "nation": "UPCY",
+            "nation": os.getenv("BALDER_WA_NATION"),
             "c": "dispatch",
             "dispatch": "add",
             "title": f"Join the World Assembly! {today.strftime('%B %d, %Y')}",
@@ -114,13 +115,13 @@ class balder(commands.Cog):
             "mode": "prepare"
         }
 
-        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("Balder-WA-X-Pin"))
 
-        os.environ["UPCY-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
+        os.environ["Balder-WA-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["Balder-WA-X-Pin"]
         data['token'] = bs(prep_request.text, "xml").find_all("SUCCESS")
         data['mode'] = "execute"
 
-        #execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("Balder-WA-X-Pin"))
 
         os.environ["Join-The-WA-Timestamp"] = str(int(datetime.datetime.now().timestamp()))
         await self.update_status()
@@ -133,11 +134,11 @@ class balder(commands.Cog):
         watchers = [watcher for watcher in f.read().split(",")]
         f.close()
 
-        notices_data = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=notices", mode=2, pin=os.getenv("UPCY-X-Pin"))
-        os.environ["UPCY-X-Pin"] = notices_data.headers.get("X-Pin") if notices_data.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
+        notices_data = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={os.getenv('BALDER_WA_NATION')}&q=notices", mode=2, pin=os.getenv("Balder-WA-X-Pin"))
+        os.environ["Balder-WA-X-Pin"] = notices_data.headers.get("X-Pin") if notices_data.headers.get("X-Pin") else os.environ["Balder-WA-X-Pin"]
 
         for notice in bs(notices_data.text, "xml").find_all("NOTICE"):
-            if notice.find("NEW") and notice.TYPE.text == "RMB" and re.search("(?<==).+?(?=/)", notice.URL.text).group(0) == "hesperides":
+            if notice.find("NEW") and notice.TYPE.text == "RMB" and re.search("(?<==).+?(?=/)", notice.URL.text).group(0) == os.getenv("BALDER_WA_REGION"):
                 message_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?region=hesperides&q=messages;limit=1;id={re.search('(?<=id=).+?(?=#)', notice.URL.text).group(0)}", mode=1).text, "xml")
 
                 nation = message_data.NATION.text
@@ -171,7 +172,7 @@ class balder(commands.Cog):
 #===================================================================================================#
     @commands.hybrid_command(name="task", with_app_command=True, description="Start or stop a scheduled task")
     @commands.has_permissions(administrator=True)
-    @isTestServer()
+    @isWAChannel()
     @app_commands.choices(
         action = [
             Choice(name="start", value="start"),
@@ -231,7 +232,7 @@ class balder(commands.Cog):
 
 #===================================================================================================#
     @app_commands.command(name="brec", description="Post a WA Recommendation to Balder's RMB")
-    @isTestServer()
+    @isWAChannel()
     @app_commands.choices(
         council = [
             Choice(name="GA", value="1"),
@@ -250,7 +251,7 @@ class balder(commands.Cog):
 
 #===================================================================================================#
     @commands.command()
-    @isTestServer()
+    @isWAChannel()
     async def balder_nne(self, ctx:commands.Context):
         await self.nne_func()
 
