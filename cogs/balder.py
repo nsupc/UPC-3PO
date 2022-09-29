@@ -166,7 +166,7 @@ class balder(commands.Cog):
         embed.add_field(name="WA Ping Listener", value="None", inline=False)
         embed.add_field(name="NNE Dispatch", value="None", inline=False)
         embed.add_field(name="Join the WA Dispatch", value="None", inline=False)
-        await ctx.reply(embed=embed)
+        await ctx.send(embed=embed)
 #===================================================================================================#
 
 #===================================================================================================#
@@ -250,7 +250,7 @@ class balder(commands.Cog):
 #===================================================================================================#
 
 #===================================================================================================#
-    @commands.command()
+    @app_commands.command(name="balder_nne", description="Manually post an NNE for NES")
     @isWAChannel()
     async def balder_nne(self, ctx:commands.Context):
         await self.nne_func()
