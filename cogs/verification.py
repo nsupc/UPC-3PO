@@ -19,10 +19,10 @@ class verification(commands.Cog):
 
     #Checks
     def isLoaded():
-        async def predicate(ctx):
-            loaded_cogs = get_cogs(ctx.guild.id)
+        async def predicate(interaction: discord.Interaction):
+            loaded_cogs = get_cogs(interaction.guild_id)
             return "v" in loaded_cogs
-        return commands.check(predicate)
+        return app_commands.check(predicate)
 
 #===================================================================================================#
     @commands.hybrid_command(name="id", with_app_command=True, description="Show nations verified by a user")

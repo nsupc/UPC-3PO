@@ -29,9 +29,9 @@ class moderation(commands.Cog):
 
     #Checks
     def isModerationChannel():
-        async def predicate(ctx):
-            return ctx.channel.id == int(os.getenv('EURO_MODERATION_CHANNEL'))
-        return commands.check(predicate)
+        async def predicate(interaction: discord.Interaction):
+            return interaction.channel_id == int(os.getenv('EURO_MODERATION_CHANNEL'))
+        return app_commands.check(predicate)
 
 #===================================================================================================#
     @tasks.loop(minutes=1)

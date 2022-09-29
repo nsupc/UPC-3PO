@@ -16,10 +16,10 @@ class admin(commands.Cog):
 
     #Checks
     def isLoaded():
-        async def predicate(ctx):
-            loaded_cogs = get_cogs(ctx.guild.id)
+        async def predicate(interaction: discord.Interaction):
+            loaded_cogs = get_cogs(interaction.guild_id)
             return "a" in loaded_cogs
-        return commands.check(predicate)
+        return app_commands.check(predicate)
 
 #===================================================================================================#
     @commands.hybrid_command(name="addrole", with_app_command=True, desciption="Assign a role to a user")

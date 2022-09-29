@@ -78,14 +78,14 @@ class balder(commands.Cog):
 
     #Checks
     def isWAChannel():
-        async def predicate(ctx):
-            return ctx.channel.id == int(os.getenv("BALDER_WA_CHANNEL"))
-        return commands.check(predicate)
+        async def predicate(interaction: discord.Interaction):
+            return interaction.channel_id == int(os.getenv("BALDER_WA_CHANNEL"))
+        return app_commands.check(predicate)
 
     def isUPC():
-        async def predicate(ctx):
-            return ctx.message.author.id == ID
-        return commands.check(predicate)
+        async def predicate(interaction: discord.Interaction):
+            return interaction.user.id == ID
+        return app_commands.check(predicate)
 
 #===================================================================================================#
     @tasks.loop(hours=168)

@@ -36,10 +36,10 @@ class nsinfo(commands.Cog):
 
     #Checks
     def isLoaded():
-        async def predicate(ctx):
-            loaded_cogs = get_cogs(ctx.guild.id)
+        async def predicate(interaction: discord.Interaction):
+            loaded_cogs = get_cogs(interaction.guild_id)
             return "n" in loaded_cogs
-        return commands.check(predicate)
+        return app_commands.check(predicate)
 
 #===================================================================================================#
     @commands.hybrid_command(name="activity", with_app_command=True, desciption="Displays a graph showing login activity for nations in a region")
