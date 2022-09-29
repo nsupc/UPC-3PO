@@ -16,6 +16,7 @@ ID = int(os.getenv("ID"))
 class Bot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
+        intents.members = True
         intents.message_content = True
         super().__init__(command_prefix=get_prefix, activity = discord.Game(name="NationStates"),intents=intents)
 
