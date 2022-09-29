@@ -6,6 +6,7 @@ import time
 from dotenv import load_dotenv
 from ratelimit import limits, sleep_and_retry
 
+load_dotenv()
 
 @sleep_and_retry
 @limits(calls=45, period=30)

@@ -17,10 +17,10 @@ class Bot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
-        super().__init__(command_prefix=get_prefix, intents=intents)
+        super().__init__(command_prefix=get_prefix, activity = discord.Game(name="NationStates"),intents=intents)
 
     async def setup_hook(self):
-        cogs = ["nsinfo", "admin", "moderation", "verification", "config", "balder"]
+        cogs = ["nsinfo", "admin", "moderation", "verification", "config", "balder", "wa_notifications"]
         for cog in cogs:
             try:
                 await self.load_extension(f"cogs.{cog}")
@@ -34,9 +34,9 @@ class Bot(commands.Bot):
 
 #Checks
 def isUPC():
-    async def predicate(ctx):
-        return ctx.message.author.id == ID
-    return commands.check(predicate)
+    async def predicate(interaction: discord.Interaction):
+        return interaction.user.id == ID
+    return app_commands.check(predicate)
 
 bot = Bot()
 bot.remove_command("help")
@@ -46,9 +46,7 @@ bot.remove_command("help")
 @isUPC()
 async def sync(interaction: discord.Interaction):
     await interaction.response.defer()
-
-    await bot.tree.sync()
-
+    await bot.setup_hook()
     await interaction.followup.send("Commands synced.")
 
 
@@ -58,12 +56,14 @@ async def sync(interaction: discord.Interaction):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
+    Choice(name="moderation", value="moderation"),
+    Choice(name="balder", value="balder"),
+    Choice(name="quorum listener", value="wa_notifications"),
 ])
 @isUPC()
 async def load(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
     await bot.load_extension(f"cogs.{cog.lower()}")
-    await bot.tree.sync()
     await interaction.followup.send(f"{cog.title()} has been loaded.")
 
 
@@ -73,12 +73,14 @@ async def load(interaction: discord.Interaction, cog: str):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
+    Choice(name="moderation", value="moderation"),
+    Choice(name="balder", value="balder"),
+    Choice(name="quorum listener", value="wa_notifications"),
 ])
 @isUPC()
 async def unload(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
     await bot.unload_extension(f"cogs.{cog.lower()}")
-    await bot.tree.sync()
     await interaction.followup.send(f"{cog.title()} has been unloaded.")
 
 
@@ -88,6 +90,9 @@ async def unload(interaction: discord.Interaction, cog: str):
     Choice(name="nsinfo", value="nsinfo"),
     Choice(name="verification", value="verification"),
     Choice(name="config", value="config"),
+    Choice(name="moderation", value="moderation"),
+    Choice(name="balder", value="balder"),
+    Choice(name="quorum listener", value="wa_notifications"),
 ])
 @isUPC()
 async def reload(interaction: discord.Interaction, cog: str):

@@ -1,5 +1,6 @@
 import datetime
 import discord
+import os
 import re
 
 from bs4 import BeautifulSoup as bs
@@ -19,29 +20,28 @@ class moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    '''
     #Events
     @commands.Cog.listener()
     async def on_ready(self):
-        if not self.automod_listener.is_running():
-            self.automod_listener.start()
-    '''
+        return
+        #if not self.automod_listener.is_running():
+        #    self.automod_listener.start()
 
     #Checks
-    def isTestServer():
+    def isModerationChannel():
         async def predicate(ctx):
-            return ctx.guild.id == 1022638031838134312
+            return ctx.channel.id == int(os.getenv('EURO_MODERATION_CHANNEL'))
         return commands.check(predicate)
 
 #===================================================================================================#
     @tasks.loop(minutes=1)
     async def automod_listener(self):
-        moderation_channel = self.bot.get_channel(1022638032295297124)
+        moderation_channel = self.bot.get_channel(os.getenv('EURO_MODERATION_CHANNEL'))
 
-        notices_data = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=terrible_purpose&q=notices", mode=2).text, "xml")
+        notices_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={os.getenv('EURO_MODERATION_NATION')}&q=notices", mode=2).text, "xml")
 
         for notice in notices_data.find_all("NOTICE"):
-            if notice.find("NEW") and notice.TYPE.text == "RMB" and re.search("(?<==).+?(?=/)", notice.URL.text).group(0) == "hesperides":
+            if notice.find("NEW") and notice.TYPE.text == "RMB" and re.search("(?<==).+?(?=/)", notice.URL.text).group(0) == os.getenv("EURO_MODERATION_REGION"):
                 message_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?region=hesperides&q=messages;limit=1;id={re.search('(?<=id=).+?(?=#)', notice.URL.text).group(0)}", mode=1).text, "xml")
 
                 reported_message_id = re.search("(?<=;)\d+(?=])", message_data.MESSAGE.text).group(0)
@@ -64,7 +64,7 @@ class moderation(commands.Cog):
 #===================================================================================================#
     @commands.hybrid_command(name="automod", with_app_command=True, description="Start or stop the automod")
     @commands.has_permissions(administrator=True)
-    @isTestServer()
+    @isModerationChannel()
     @app_commands.choices(
         action = [
             Choice(name="start", value="start"),

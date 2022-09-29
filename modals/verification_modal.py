@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as bs
 from the_brain import api_call, connector, format_names, get_roles, log
 
 class VerificationModal(discord.ui.Modal, title="Verification"):
-    def __init__(self, bot, nation=None):
+    def __init__(self, bot):
         super().__init__()
         self.bot = bot
 

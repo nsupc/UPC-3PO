@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 
 from the_brain import api_call
 
-class BalderRecommendationModal(discord.ui.Modal, title="Recommendation"):
+class BalderRecommendationModal(discord.ui.Modal, title="Balder WA Recommendation"):
     def __init__(self, bot, council, position, title):
         super().__init__()
         self.bot = bot
@@ -30,20 +30,21 @@ class BalderRecommendationModal(discord.ui.Modal, title="Recommendation"):
         formatted_message = message.replace("@@COUNCIL@@", "ga" if self.council == "1" else "sc").replace("@@TITLE@@", self.title).replace("@@POSITION@@", self.position).replace("@@RECOMMENDATION@@", self.recommendation.value).replace("@@WATCHERS@@", ", ".join(watchers[:-1]) + ', and ' + watchers[-1] if len(watchers) > 1 else watchers[0])
 
         data = {
-            'nation': 'UPCY',
-            'region': 'hesperides',
+            'nation': os.getenv("BALDER_WA_NATION"),
+            'region': os.getenv("BALDER_WA_REGION"),
             'c': 'rmbpost',
             'text': formatted_message,
             'mode': 'prepare'
         }
 
-        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        prep_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("Balder-WA-X-Pin"))
 
-        os.environ["UPCY-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["UPCY-X-Pin"]
+        print(os.environ["BALDER-WA-X-Pin"])
+        os.environ["BALDER-WA-X-Pin"] = prep_request.headers.get("X-Pin") if prep_request.headers.get("X-Pin") else os.environ["BALDER-WA-X-Pin"]
         data['token'] = bs(prep_request.text, "xml").find_all("SUCCESS")
         data['mode'] = "execute"
 
-        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("UPCY-X-Pin"))
+        execute_request = api_call(url="https://www.nationstates.net/cgi-bin/api.cgi", mode=3, data=data, pin=os.getenv("BALDER-WA-X-Pin"))
 
         await modal_interaction.followup.send("Recommendation Posted!")
 

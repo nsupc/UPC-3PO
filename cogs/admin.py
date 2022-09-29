@@ -6,7 +6,7 @@ from discord.app_commands import Choice
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from the_brain import connector, get_cogs
+from the_brain import get_cogs
 
 load_dotenv()
 
