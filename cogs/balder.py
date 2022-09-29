@@ -69,12 +69,12 @@ class balder(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         os.environ["Balder-WA-X-Pin"] = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={os.getenv('BALDER_WA_NATION')}&q=ping", mode=2).headers['X-Pin']
-        if not self.join_the_wa.is_running():
-            self.join_the_wa.start()
+        #if not self.join_the_wa.is_running():
+        #    self.join_the_wa.start()
         if not self.wa_listener.is_running():
             self.wa_listener.start()
-        if not self.scheduled_nne.is_running():
-            self.scheduled_nne.start()
+        #if not self.scheduled_nne.is_running():
+        #    self.scheduled_nne.start()
 
     #Checks
     def isWAChannel():

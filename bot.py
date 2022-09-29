@@ -34,9 +34,9 @@ class Bot(commands.Bot):
 
 #Checks
 def isUPC():
-    async def predicate(ctx):
-        return ctx.message.author.id == ID
-    return commands.check(predicate)
+    async def predicate(interaction: discord.Interaction):
+        return interaction.user.id == ID
+    return app_commands.check(predicate)
 
 bot = Bot()
 bot.remove_command("help")
