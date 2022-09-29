@@ -41,7 +41,7 @@ class verification(commands.Cog):
             await ctx.reply(f"{user} has no verified identities in this server.")
             return
 
-        # this block creates a list of discord embeds, each containing a list of 20 nations for the given nation to endorse
+        # this block creates a list of discord embeds, each containing a list of 20 of the user's verified nations
         count = 1
         pages = math.ceil(len(myresult) / 20)
         id_pages = []
