@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as bs
 
 from the_brain import api_call
 
-class BalderRecommendationModal(discord.ui.Modal, title="Recommendation"):
+class BalderRecommendationModal(discord.ui.Modal, title="Balder WA Recommendation"):
     def __init__(self, bot, council, position, title):
         super().__init__()
         self.bot = bot
