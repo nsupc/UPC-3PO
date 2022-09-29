@@ -69,12 +69,12 @@ class balder(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         os.environ["Balder-WA-X-Pin"] = api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?nation={os.getenv('BALDER_WA_NATION')}&q=ping", mode=2).headers['X-Pin']
-        #if not self.join_the_wa.is_running():
-        #    self.join_the_wa.start()
-        #if not self.wa_listener.is_running():
-        #    self.wa_listener.start()
-        #if not self.scheduled_nne.is_running():
-        #    self.scheduled_nne.start()
+        if not self.join_the_wa.is_running():
+            self.join_the_wa.start()
+        if not self.wa_listener.is_running():
+            self.wa_listener.start()
+        if not self.scheduled_nne.is_running():
+            self.scheduled_nne.start()
 
     #Checks
     def isWAChannel():
@@ -252,11 +252,12 @@ class balder(commands.Cog):
 #===================================================================================================#
     @app_commands.command(name="balder_nne", description="Manually post an NNE for NES")
     @isWAChannel()
-    async def balder_nne(self, ctx:commands.Context):
+    async def balder_nne(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.nne_func()
 
         dispatch_list = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?nation=UPCY&q=dispatchlist", mode=1).text, "xml").find_all("DISPATCH")
-        await ctx.send(f"NNE Posted: https://www.nationstates.net/page=dispatch/id={dispatch_list[-1]['id']}")
+        await interaction.followup.send(f"NNE Posted: https://www.nationstates.net/page=dispatch/id={dispatch_list[-1]['id']}")
 #===================================================================================================#
 
 async def setup(bot):
