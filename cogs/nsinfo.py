@@ -95,7 +95,7 @@ class nsinfo(commands.Cog):
     async def deck(self, ctx: commands.Context, *, nation: str):
         await ctx.defer()
 
-        nat = format_names(name=nat, mode=1)
+        nat = format_names(name=nation, mode=1)
 
         card_count_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+info;nationname={nat}", mode=1).text, "xml").find("NUM_CARDS")
 
