@@ -26,13 +26,13 @@ class nsinfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def millify(self, n):
+    def millify(self, num):
         millnames = ['',' Thousand',' Million',' Billion',' Trillion']
-        n = float(n) * 1000000
+        n = float(num) * 1000000
         millidx = max(0,min(len(millnames)-1,
                             int(math.floor(0 if n == 0 else math.log10(abs(n))/3))))
 
-        return '{:.3g}{}'.format(n / 10**(3 * millidx), millnames[millidx])
+        return f'{(n / 10**(3 * millidx)):.{len(str(num))}g}{millnames[millidx]}' #.format(n / 10**(3 * millidx), millnames[millidx])
 
     #Checks
     def isLoaded():
