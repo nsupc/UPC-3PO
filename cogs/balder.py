@@ -261,4 +261,5 @@ class balder(commands.Cog):
 #===================================================================================================#
 
 async def setup(bot):
-    await bot.add_cog(balder(bot))
+    #this is supposed to add the cog only for the one guild? but it doesn't seem to work idk
+    await bot.add_cog(balder(bot), guild=discord.Object(id=1022638031838134312))
