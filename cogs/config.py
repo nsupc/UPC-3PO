@@ -188,7 +188,7 @@ class config(commands.Cog):
             Choice(name="Verification", value="verification")
         ]
     )
-    async def help(self, ctx:commands.Context, set: str):
+    async def help(self, ctx:commands.Context, set: str = None):
         await ctx.defer()
 
         view = HelpView(ctx=ctx)
@@ -202,6 +202,9 @@ class config(commands.Cog):
                 await ctx.reply(embed=get_nsinfo_embed(), view=view)
             case "verification":
                 await ctx.reply(embed=get_verification_embed(), view=view)
+            case _:
+                await ctx.reply(embed=get_config_embed_help(), view=view)
+
 #===================================================================================================#
 
 #===================================================================================================#
