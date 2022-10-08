@@ -26,6 +26,7 @@ class nsinfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    #Functions
     def millify(self, num):
         millnames = ['',' Thousand',' Million',' Billion',' Trillion']
         n = float(num) * 1000000
