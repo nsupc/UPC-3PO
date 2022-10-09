@@ -15,8 +15,6 @@ from discord.ui import Button, View
 from dotenv import load_dotenv
 
 from the_brain import api_call, connector, format_names, get_cogs
-from views.endotarting_view import EndotartingView
-from views.nne_view import NNEView
 
 load_dotenv()
 
@@ -25,6 +23,124 @@ load_dotenv()
 class nsinfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+
+    #Views
+    class EndotartingView(View):
+        def __init__(self, ctx, endotarting_pages):
+            super().__init__()
+            self.ctx = ctx
+            self.endotarting_pages = endotarting_pages
+            self.current = 0
+
+
+        @discord.ui.button(label="<-", style=discord.ButtonStyle.blurple, disabled=True)
+        async def back_callback(self, interaction: discord.Interaction, button):
+            if interaction.user != self.ctx.message.author:
+                return
+
+            self.children[1].disabled = False
+            self.current -= 1
+
+            if self.current == 0:
+                self.children[0].disabled = True
+
+            await interaction.response.edit_message(embed=self.endotarting_pages[self.current], view=self)
+
+
+        @discord.ui.button(label="->", style=discord.ButtonStyle.blurple)
+        async def forward_callback(self, interaction: discord.Interaction, button):
+            if interaction.user != self.ctx.message.author:
+                return
+
+            self.children[0].disabled = False
+            self.current += 1
+
+            if self.current == len(self.endotarting_pages) - 1:
+                self.children[1].disabled = True
+
+            await interaction.response.edit_message(embed=self.endotarting_pages[self.current], view=self)
+
+
+        @discord.ui.button(label="✖", style=discord.ButtonStyle.danger)
+        async def cancel_callback(self, interaction: discord.Interaction, button):
+            if interaction.user != self.ctx.message.author:
+                return
+
+            self.value = None
+            for child in self.children:
+                child.disabled = True
+
+            await interaction.response.edit_message(view=self)
+            self.stop()
+
+
+        async def on_timeout(self):
+            self.value = None
+            for child in self.children:
+                child.disabled = True
+
+            await self.message.edit(view=self)
+            self.stop()
+
+
+    class NNEView(View):
+        def __init__(self, ctx, nne_pages):
+            super().__init__()
+            self.ctx = ctx
+            self.nne_pages = nne_pages
+            self.current = 0
+
+
+        @discord.ui.button(label="<-", style=discord.ButtonStyle.blurple, disabled=True)
+        async def back_callback(self, interaction: discord.Interaction, button):
+            if interaction.user != self.ctx.message.author:
+                return
+
+            self.children[1].disabled = False
+            self.current -= 1
+
+            if self.current == 0:
+                self.children[0].disabled = True
+
+            await interaction.response.edit_message(embed=self.nne_pages[self.current], view=self)
+
+
+        @discord.ui.button(label="->", style=discord.ButtonStyle.blurple)
+        async def forward_callback(self, interaction: discord.Interaction, button):
+            if interaction.user != self.ctx.message.author:
+                return
+
+            self.children[0].disabled = False
+            self.current += 1
+
+            if self.current == len(self.nne_pages) - 1:
+                self.children[1].disabled = True
+
+            await interaction.response.edit_message(embed=self.nne_pages[self.current], view=self)
+
+
+        @discord.ui.button(label="✖", style=discord.ButtonStyle.danger)
+        async def cancel_callback(self, interaction: discord.Interaction, button):
+            if interaction.user != self.ctx.message.author:
+                return
+
+            self.value = None
+            for child in self.children:
+                child.disabled = True
+
+            await interaction.response.edit_message(view=self)
+            self.stop()
+
+
+        async def on_timeout(self):
+            self.value = None
+            for child in self.children:
+                child.disabled = True
+
+            await self.message.edit(view=self)
+            self.stop()
+
 
     #Functions
     def millify(self, num):
@@ -192,11 +308,7 @@ class nsinfo(commands.Cog):
             count += 1
             endotarting_pages.append(embed)
 
-        if len(endotarting_pages) > 1:
-            view = EndotartingView(ctx=ctx, endotarting_pages=endotarting_pages)
-            view.message = await ctx.reply(embed=endotarting_pages[0], view=view)
-        else:
-            await ctx.reply(embed=endotarting_pages[0])
+        await ctx.reply(embed=endotarting_pages[0], view=self.EndotartingView(ctx=ctx, nne_pages=endotarting_pages) if len(endotarting_pages) > 1 else None)
 #===================================================================================================#
 
 #===================================================================================================#
@@ -349,13 +461,13 @@ class nsinfo(commands.Cog):
         mycursor.execute(f"SELECT name FROM ns.nations WHERE NOT name = '{nat}' AND NOT unstatus = 'Non-member' AND region = '{region}'")
         
         myresult = mycursor.fetchall()
-        
-        if not myresult:
-            await ctx.reply(f"I can't find anyone in {format_names(name=region, mode=2)} that hasn't endorsed {format_names(name=nat, mode=2)}.")
-            return
 
         endorsements = bs(nation_req.text, "xml").ENDORSEMENTS.text.split(",")
         nations_not_endorsing = [nation[0] for nation in myresult if nation[0] not in endorsements]
+
+        if not nations_not_endorsing:
+            await ctx.reply(f"I can't find any World Assembly nations in {format_names(name=region, mode=2)} that haven't endorsed {format_names(name=nat, mode=2)}")
+            return
 
         # this block creates a list of discord embeds, each containing a list of 20 nations that haven't endorsed the given nation
         count = 1
@@ -373,11 +485,7 @@ class nsinfo(commands.Cog):
             count += 1
             nne_pages.append(embed)
 
-        if len(nne_pages) > 1:
-            view = NNEView(ctx=ctx, nne_pages=nne_pages)
-            view.message = await ctx.reply(embed=nne_pages[0], view=view)
-        else:
-            await ctx.reply(embed=nne_pages[0])
+        await ctx.reply(embed=nne_pages[0], view=self.NNEView(ctx=ctx, nne_pages=nne_pages) if len(nne_pages) > 1 else None)
 #===================================================================================================#
 
 #===================================================================================================#
