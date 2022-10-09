@@ -7,10 +7,6 @@ from discord.ui import View
 from dotenv import load_dotenv
 
 from the_brain import connector, log, welcome
-#from embeds.config_embeds import *
-#from embeds.help_embeds import *
-#from views.config_views import ConfigView
-#from views.help_view import HelpView
 
 load_dotenv()
 
