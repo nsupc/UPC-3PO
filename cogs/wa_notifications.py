@@ -11,7 +11,6 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from the_brain import api_call
-from modals.balder_recommendation_modal import BalderRecommendationModal
 
 load_dotenv()
 ID = int(os.getenv("ID"))
