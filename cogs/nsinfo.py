@@ -424,16 +424,10 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Region", value=f"[{nation_data.REGION.text}](https://nationstates.net/region={format_names(name=nation_data.REGION.text, mode=1)}) ({census[1]} Days)", inline=True)
             embed.add_field(name="World Assembly Status", value=nation_data.UNSTATUS.text, inline=True)
             embed.add_field(name="Influence", value=f"{nation_data.INFLUENCE.text} ({'{:,}'.format(int(census[0]))})", inline=True)
-
             embed.add_field(name="Category", value=nation_data.CATEGORY.text, inline=True)
             embed.add_field(name="Issues", value=nation_data.ISSUES_ANSWERED.text, inline=True)
-
             embed.add_field(name="Population", value=self.millify(nation_data.POPULATION.text), inline=True)
-            fdate = str(datetime.date.fromtimestamp(int(nation_data.FIRSTLOGIN.text)))
-            if fdate in ['1969-12-31', '1970-01-01']:
-                embed.add_field(name="Founded", value="Antiquity", inline=True)
-            else:
-                embed.add_field(name="Founded", value=fdate, inline=True)
+            embed.add_field(name="Founded", value="Antiquity" if int(nation_data.FIRSTLOGIN.text) == 0 else datetime.date.fromtimestamp(int(nation_data.FIRSTLOGIN.text)).strftime("%b %d, %Y"), inline=True)
             embed.add_field(name="ID", value=nation_data.DBID.text, inline=True)
             embed.add_field(name="Most Recent Activity", value=f'<t:{int(nation_data.LASTLOGIN.text)}:R>', inline=True)
 
