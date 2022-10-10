@@ -1,8 +1,6 @@
-import datetime
 import discord
+import json
 import os
-import random
-import re
 
 from bs4 import BeautifulSoup as bs
 from discord import app_commands
@@ -38,16 +36,23 @@ class wa_notifications(commands.Cog):
         previous = [proposal for proposal in r.read().split(",")]
         r.close()
 
+        r = open("logs/quorum.json", "r")
+        alerts = json.load(r)
+        r.close()
+
         ids = []
         new = []
 
+        #approaching quorum here means that a proposal has 50% of the required approvals to reach quorum
+        quorum_threshold = int(bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=numdelegates", mode=1).text, "xml").NUMDELEGATES.text) * .03
+
         color = int("2d0001", 16)
-        embed = discord.Embed(title="World Assembly Proposals Nearing Quorum", color=color)
+        embed = discord.Embed(title="World Assembly Proposals Approaching Quorum", color=color)
 
         ga_proposals = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=1&q=proposals", mode=1).text, "xml").find_all("PROPOSAL")
 
         for proposal in ga_proposals:
-            if len(proposal.APPROVALS.text.split(":")) > 30:
+            if len(proposal.APPROVALS.text.split(":")) > quorum_threshold:
                 ids.append(proposal.ID.text)
                 if proposal.ID.text not in previous:
                     new.append(proposal.ID.text)
@@ -56,15 +61,16 @@ class wa_notifications(commands.Cog):
         sc_proposals = bs(api_call(url="https://www.nationstates.net/cgi-bin/api.cgi?wa=2&q=proposals", mode=1).text, "xml").find_all("PROPOSAL")
 
         for proposal in sc_proposals:
-            if len(proposal.APPROVALS.text.split(":")) > 30:
+            if len(proposal.APPROVALS.text.split(":")) > quorum_threshold:
                 ids.append(proposal.ID.text)
                 if proposal.ID.text not in previous:
                     new.append(proposal.ID.text)
                     embed.add_field(name=f"SC: '{proposal.NAME.text.title()}' by {proposal.PROPOSED_BY.text.title()}", value=f"[https://www.nationstates.net/page=UN_view_proposal/id={proposal.ID.text}](https://www.nationstates.net/page=UN_view_proposal/id={proposal.ID.text})", inline=False)
 
         if new:
-            channel = self.bot.get_channel(1022638032295297124)
-            await channel.send(embed=embed)
+            for channel in alerts:
+                notification_channel = self.bot.get_channel(int(channel))
+                await notification_channel.send(content=alerts[channel], embed=embed)
 
         r = open("logs/proposals.txt", "w")
         r.write(",".join(ids))
