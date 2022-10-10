@@ -3,6 +3,6 @@
 *.xml
 *.pyc
 .DS_Store
-logs/
 venv/
 __pycache__
+logs/proposals.txt
