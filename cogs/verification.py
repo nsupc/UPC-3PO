@@ -128,7 +128,7 @@ class verification(commands.Cog):
             self.current = 0
 
 
-        @discord.ui.button(label="🡰", style=discord.ButtonStyle.blurple, disabled=True)
+        @discord.ui.button(label="<-", style=discord.ButtonStyle.blurple, disabled=True)
         async def back_callback(self, interaction: discord.Interaction, button):
             if interaction.user != self.ctx.message.author:
                 return
@@ -142,7 +142,7 @@ class verification(commands.Cog):
             await interaction.response.edit_message(embed=self.id_pages[self.current], view=self)
 
 
-        @discord.ui.button(label="🡲", style=discord.ButtonStyle.blurple)
+        @discord.ui.button(label="->", style=discord.ButtonStyle.blurple)
         async def forward_callback(self, interaction: discord.Interaction, button):
             if interaction.user != self.ctx.message.author:
                 return
@@ -353,6 +353,8 @@ class verification(commands.Cog):
         embed.add_field(name="Instructions", value=f"1. Sign into NationStates as the nation you would like to verify\n2. Navigate to the [Nationstates Verification page](https://www.nationstates.net/page=verify_login) and copy the code you're given\n3. Press the green button below, and input your nation name and the code you were given", inline=True)
 
         view = self.VerificationView(bot=self.bot, ctx=ctx)
+        #Link buttons can't be created in the view subclass, so it has to be added manually here
+        view.add_item(discord.ui.Button(label="Get Code", style=discord.ButtonStyle.link, url="https://www.nationstates.net/page=verify_login"))
 
         view.message = await ctx.send(embed=embed, view=view)
 #===================================================================================================#
