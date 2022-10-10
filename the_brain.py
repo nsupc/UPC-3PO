@@ -64,7 +64,9 @@ def format_names(name: str, mode: int):
     return name
 
 
-def get_cogs(id):
+def get_cogs(id: int) -> str:
+    '''Returns the cogs (anv) loaded in this server as a string'''
+    
     mydb = connector()
     mycursor = mydb.cursor()
     mycursor.execute(f'SELECT cogs FROM guild WHERE serverid = "{id}" LIMIT 1')
