@@ -27,11 +27,11 @@ class Bot(commands.Bot):
                 await self.load_extension(f"cogs.{cog}")
             except:
                 await self.reload_extension(f"cogs.{cog}")
-        await self.tree.sync()
-        print(f"Synced slash commands for {self.user}.")
+        #await self.tree.sync()
+        #print(f"Synced slash commands for {self.user}.")
 
-    async def on_command_error(self, ctx, error):
-        await ctx.reply(error, ephemeral=True)
+    #async def on_command_error(self, ctx, error):
+    #    await ctx.reply(error, ephemeral=True)
 
 #Checks
 def isUPC():
@@ -47,20 +47,11 @@ bot.remove_command("help")
 @isUPC()
 async def sync(interaction: discord.Interaction):
     await interaction.response.defer()
-    await bot.setup_hook()
+    await bot.tree.sync()
     await interaction.followup.send("Commands synced.")
 
 
 @bot.tree.command(name="load", description="Load a cog globally")
-@app_commands.choices(cog = [
-    Choice(name="admin", value="admin"),
-    Choice(name="nsinfo", value="nsinfo"),
-    Choice(name="verification", value="verification"),
-    Choice(name="config", value="config"),
-    Choice(name="moderation", value="moderation"),
-    Choice(name="balder", value="balder"),
-    Choice(name="quorum listener", value="wa_notifications"),
-])
 @isUPC()
 async def load(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
@@ -69,15 +60,6 @@ async def load(interaction: discord.Interaction, cog: str):
 
 
 @bot.tree.command(name="unload", description="Unload a cog globally")
-@app_commands.choices(cog = [
-    Choice(name="admin", value="admin"),
-    Choice(name="nsinfo", value="nsinfo"),
-    Choice(name="verification", value="verification"),
-    Choice(name="config", value="config"),
-    Choice(name="moderation", value="moderation"),
-    Choice(name="balder", value="balder"),
-    Choice(name="quorum listener", value="wa_notifications"),
-])
 @isUPC()
 async def unload(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
@@ -86,15 +68,6 @@ async def unload(interaction: discord.Interaction, cog: str):
 
 
 @bot.tree.command(name="reload", description="Reload a cog globally")
-@app_commands.choices(cog = [
-    Choice(name="admin", value="admin"),
-    Choice(name="nsinfo", value="nsinfo"),
-    Choice(name="verification", value="verification"),
-    Choice(name="config", value="config"),
-    Choice(name="moderation", value="moderation"),
-    Choice(name="balder", value="balder"),
-    Choice(name="quorum listener", value="wa_notifications"),
-])
 @isUPC()
 async def reload(interaction: discord.Interaction, cog: str):
     await interaction.response.defer()
