@@ -427,7 +427,8 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Category", value=nation_data.CATEGORY.text, inline=True)
             embed.add_field(name="Issues", value=nation_data.ISSUES_ANSWERED.text, inline=True)
             embed.add_field(name="Population", value=self.millify(nation_data.POPULATION.text), inline=True)
-            embed.add_field(name="Founded", value="Antiquity" if int(nation_data.FIRSTLOGIN.text) == 0 else datetime.date.fromtimestamp(int(nation_data.FIRSTLOGIN.text)).strftime("%b %d, %Y"), inline=True)
+            #embed.add_field(name="Founded", value="Antiquity" if int(nation_data.FIRSTLOGIN.text) == 0 else datetime.date.fromtimestamp(int(nation_data.FIRSTLOGIN.text)).strftime("%b %d, %Y"), inline=True)
+            embed.add_field(name="Founded", value="Antiquity" if int(nation_data.FIRSTLOGIN.text) == 0 else f"<t:{int(nation_data.FIRSTLOGIN.text)}:D>", inline=True)
             embed.add_field(name="ID", value=nation_data.DBID.text, inline=True)
             embed.add_field(name="Most Recent Activity", value=f'<t:{int(nation_data.LASTLOGIN.text)}:R>', inline=True)
 
