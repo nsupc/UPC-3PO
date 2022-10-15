@@ -566,8 +566,8 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
             embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
             embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
-            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}", inline=True)
-            embed.add_field(name=f"Highest Bid (of {bids})", value=f"{(bid):.2f}", inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if ask != "None" else ask, inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})",  value=f"{(bid):.2f}" if bid != "None" else bid, inline=True)
 
             await ctx.reply(embed=embed)
         else:
@@ -618,8 +618,8 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
             embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
             embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
-            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}", inline=True)
-            embed.add_field(name=f"Highest Bid (of {bids})", value=f"{(bid):.2f}", inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if ask != "None" else ask, inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})",  value=f"{(bid):.2f}" if bid != "None" else bid, inline=True)
 
             await ctx.reply(embed=embed)
         else:
