@@ -555,19 +555,14 @@ class nsinfo(commands.Cog):
                     if float(market.PRICE.text) < ask:
                         ask = float(market.PRICE.text)
 
-            if asks == 0:
-                ask = "None"
-            if bids == 0:
-                bid = "None"
-
             color = int("2d0001", 16)
             embed=discord.Embed(title=card_data.NAME.text, url=f"https://www.nationstates.net/page=deck/card={card_data.CARDID.text}/season=1", description=f'"{card_data.SLOGAN.text}"', color=color)
             embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s1/{card_data.FLAG.text}")
             embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
             embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
             embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
-            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if ask != "None" else ask, inline=True)
-            embed.add_field(name=f"Highest Bid (of {bids})",  value=f"{(bid):.2f}" if bid != "None" else bid, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if asks != 0 else "None", inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=f"{(bid):.2f}" if bids != 0 else "None", inline=True)
 
             await ctx.reply(embed=embed)
         else:
@@ -607,19 +602,14 @@ class nsinfo(commands.Cog):
                     if float(market.PRICE.text) < ask:
                         ask = float(market.PRICE.text)
 
-            if asks == 0:
-                ask = "None"
-            if bids == 0:
-                bid = "None"
-
             color = int("2d0001", 16)
             embed=discord.Embed(title=card_data.NAME.text, url=f"https://www.nationstates.net/page=deck/card={card_data.CARDID.text}/season=2", description=f'"{card_data.SLOGAN.text}"', color=color)
             embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s2/{card_data.FLAG.text}")
             embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
             embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
             embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
-            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if ask != "None" else ask, inline=True)
-            embed.add_field(name=f"Highest Bid (of {bids})",  value=f"{(bid):.2f}" if bid != "None" else bid, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if asks != 0 else "None", inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=f"{(bid):.2f}" if bids != 0 else "None", inline=True)
 
             await ctx.reply(embed=embed)
         else:
