@@ -415,15 +415,14 @@ class nsinfo(commands.Cog):
         else:
             nation_data = bs(nation_req.text, "xml")
 
-            # census[0] is the nation's influence value, census[1] is the residency value
-            census = [round(float(score.text), 2) for score in nation_data.CENSUS.find_all("SCORE")]
+            influence, residency = [round(float(score.text), 2) for score in nation_data.CENSUS.find_all("SCORE")]
 
             color = int("2d0001", 16)
             embed=discord.Embed(title=html.unescape(nation_data.FULLNAME.text), url=f"https://nationstates.net/nation={nat}", description=f'"{html.unescape(nation_data.MOTTO.text)}"', color=color)
             embed.set_thumbnail(url=nation_data.FLAG.text)
-            embed.add_field(name="Region", value=f"[{nation_data.REGION.text}](https://nationstates.net/region={format_names(name=nation_data.REGION.text, mode=1)}) ({census[1]} Days)", inline=True)
+            embed.add_field(name="Region", value=f"[{nation_data.REGION.text}](https://nationstates.net/region={format_names(name=nation_data.REGION.text, mode=1)}) ({residency} Days)", inline=True)
             embed.add_field(name="World Assembly Status", value=nation_data.UNSTATUS.text, inline=True)
-            embed.add_field(name="Influence", value=f"{nation_data.INFLUENCE.text} ({'{:,}'.format(int(census[0]))})", inline=True)
+            embed.add_field(name="Influence", value=f"{nation_data.INFLUENCE.text} ({'{:,}'.format(int(influence))})", inline=True)
             embed.add_field(name="Category", value=nation_data.CATEGORY.text, inline=True)
             embed.add_field(name="Issues", value=nation_data.ISSUES_ANSWERED.text, inline=True)
             embed.add_field(name="Population", value=self.millify(nation_data.POPULATION.text), inline=True)
