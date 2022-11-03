@@ -308,7 +308,7 @@ class nsinfo(commands.Cog):
             count += 1
             endotarting_pages.append(embed)
 
-        await ctx.reply(embed=endotarting_pages[0], view=self.EndotartingView(ctx=ctx, nne_pages=endotarting_pages) if len(endotarting_pages) > 1 else None)
+        await ctx.reply(embed=endotarting_pages[0], view=self.EndotartingView(ctx=ctx, endotarting_pages=endotarting_pages) if len(endotarting_pages) > 1 else None)
 #===================================================================================================#
 
 #===================================================================================================#
