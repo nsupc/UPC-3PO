@@ -4,6 +4,7 @@ import discord
 import html
 import math
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as path_effects
 import os
 
 from bs4 import BeautifulSoup as bs
@@ -13,6 +14,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View
 from dotenv import load_dotenv
+
 
 from the_brain import api_call, connector, format_names, get_cogs
 
@@ -237,7 +239,7 @@ class nsinfo(commands.Cog):
                 sdict[card.SEASON.text] += 1
                 sum += 1
 
-            path = nat + "_deck.jpg"
+            path = nat + "_deck.png"
 
             count = 0
             for x in cdict:
@@ -247,9 +249,11 @@ class nsinfo(commands.Cog):
                     color.append(colors[count])
                 count += 1
 
-            plt.pie(values, labels = labels, colors = color)
-            plt.title(f'{nat.replace("_"," ").title()}\'s Deck')
-            plt.savefig(path)
+            plt.style.use('dark_background')
+            _wedges, pie_labels = plt.pie(values, labels = labels, colors = color)
+            plt.setp(pie_labels, path_effects=[path_effects.Stroke(linewidth=1, foreground='black'),path_effects.Normal()])
+            plt.title(f'{nat.replace("_"," ").title()}\'s Deck', path_effects=[path_effects.Stroke(linewidth=1, foreground='black'),path_effects.Normal()])
+            plt.savefig(path, transparent=True)
             plt.clf()
 
             file = discord.File(path, filename=path)
