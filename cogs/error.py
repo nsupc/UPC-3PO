@@ -61,6 +61,8 @@ class error(commands.Cog):
             await ctx.reply("I do not have sufficient permissions to execute this command here.", ephemeral=True)
         elif isinstance(error, commands.MissingPermissions):
             await ctx.reply("You do not have sufficient permissions to execute this command.", ephemeral=True)
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.reply(f"Missing required argument: {error.param}.", ephemeral=True)
         elif isinstance(error, commands.CheckFailure):
             UPC_ONLY = ['wa_listener_setup', 'quorum_listener']
             BALDER_ONLY = ['task', 'brec', 'balder_nne']
