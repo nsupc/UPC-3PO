@@ -227,7 +227,7 @@ class nsinfo(commands.Cog):
         else:
             deck_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={nat}", mode=1).text, 'xml')
             cdict = {"legendary": 0, "epic": 0, "ultra-rare": 0, "rare": 0, "uncommon": 0, "common": 0}
-            sdict = {"1": 0, "2": 0}
+            sdict = {"1": 0, "2": 0, "3": 0}
             sum = 0
             values = []
             labels = []
@@ -263,7 +263,7 @@ class nsinfo(commands.Cog):
             embed.add_field(name="Bank", value=f"{deck_data.BANK.text}", inline=True)
             embed.add_field(name="Number of Cards", value = f"{sum}", inline=True)
             embed.set_image(url=f"attachment://{path}")
-            embed.set_footer(text=f"Season 1 Cards: {sdict['1']}, Season 2 Cards: {sdict['2']}")
+            embed.set_footer(text=f"Season 1 Cards: {sdict['1']}, Season 2 Cards: {sdict['2']}, Season 3 Cards: {sdict['3']}")
 
             await ctx.reply(file=file, embed=embed)
             file.close()
