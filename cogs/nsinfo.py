@@ -535,7 +535,7 @@ class nsinfo(commands.Cog):
         mydb = connector()
         mycursor = mydb.cursor()
 
-        mycursor.execute(f"SELECT dbid FROM s1 WHERE name = '{nat}'")
+        mycursor.execute(f"SELECT dbid FROM s1_cards WHERE name = '{nat}'")
         dbid = mycursor.fetchone()
 
         if dbid:
@@ -582,7 +582,7 @@ class nsinfo(commands.Cog):
         mydb = connector()
         mycursor = mydb.cursor()
 
-        mycursor.execute(f"SELECT dbid FROM s2 WHERE name = '{nat}'")
+        mycursor.execute(f"SELECT dbid FROM s2_cards WHERE name = '{nat}'")
         dbid = mycursor.fetchone()
 
         if dbid:
@@ -617,6 +617,53 @@ class nsinfo(commands.Cog):
             await ctx.reply(embed=embed)
         else:
             await ctx.reply(f"{format_names(name=nat, mode=2)} does not have a Season 2 trading card.")
+#===================================================================================================#
+
+#===================================================================================================#
+    @commands.hybrid_command(name="s3", with_app_command=True, description="Retrieve information about a Season 2 trading card")
+    @isLoaded()
+    async def s3(self, ctx: commands.Context, *, nation: str):
+        await ctx.defer()
+
+        nat = format_names(name=nation, mode=1)
+        mydb = connector()
+        mycursor = mydb.cursor()
+
+        mycursor.execute(f"SELECT dbid FROM s3_cards WHERE name = '{nat}'")
+        dbid = mycursor.fetchone()
+
+        if dbid:
+            dbid = dbid[0]
+
+            card_data = bs(api_call(url=f"https://www.nationstates.net/cgi-bin/api.cgi?q=card+info+markets;cardid={dbid};season=3", mode=1).text, 'xml')
+
+            ask = 10000.00
+            bid = 0.00
+            asks = 0
+            bids = 0
+
+            for market in card_data.find_all("MARKET"):
+                if market.TYPE.text == "bid":
+                    bids += 1  
+                    if float(market.PRICE.text) > bid:
+                        bid = float(market.PRICE.text)
+                elif market.TYPE.text == "ask":
+                    asks += 1
+                    if float(market.PRICE.text) < ask:
+                        ask = float(market.PRICE.text)
+
+            color = int("2d0001", 16)
+            embed=discord.Embed(title=card_data.NAME.text, url=f"https://www.nationstates.net/page=deck/card={card_data.CARDID.text}/season=3", description=f'"{card_data.SLOGAN.text}"', color=color)
+            embed.set_thumbnail(url=f"https://www.nationstates.net/images/cards/s3/{card_data.FLAG.text}")
+            embed.add_field(name="Market Value", value=card_data.MARKET_VALUE.text, inline=True)
+            embed.add_field(name="Rarity", value=card_data.CATEGORY.text.capitalize(), inline=True)
+            embed.add_field(name="Card ID", value=card_data.CARDID.text, inline=True)
+            embed.add_field(name=f"Lowest Ask (of {asks})", value=f"{(ask):.2f}" if asks != 0 else "None", inline=True)
+            embed.add_field(name=f"Highest Bid (of {bids})", value=f"{(bid):.2f}" if bids != 0 else "None", inline=True)
+
+            await ctx.reply(embed=embed)
+        else:
+            await ctx.reply(f"{format_names(name=nat, mode=2)} does not have a Season 3 trading card.")
 #===================================================================================================#
 
 #===================================================================================================#
