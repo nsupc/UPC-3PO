@@ -21,7 +21,7 @@ class Bot(commands.Bot):
         super().__init__(command_prefix=get_prefix, activity = discord.Game(name="NationStates"),intents=intents)
 
     async def setup_hook(self):
-        cogs = ["nsinfo", "admin", "moderation", "verification", "config", "balder", "wa_notifications", "error"]
+        cogs = ["nsinfo", "admin", "verification", "config", "wa_notifications", "error"]
         for cog in cogs:
             try:
                 await self.load_extension(f"cogs.{cog}")
