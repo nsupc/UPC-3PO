@@ -620,7 +620,7 @@ class nsinfo(commands.Cog):
 #===================================================================================================#
 
 #===================================================================================================#
-    @commands.hybrid_command(name="s3", with_app_command=True, description="Retrieve information about a Season 2 trading card")
+    @commands.hybrid_command(name="s3", with_app_command=True, description="Retrieve information about a Season 3 trading card")
     @isLoaded()
     async def s3(self, ctx: commands.Context, *, nation: str):
         await ctx.defer()
