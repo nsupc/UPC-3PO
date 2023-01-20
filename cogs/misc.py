@@ -18,7 +18,7 @@ class misc(commands.Cog):
             embed = discord.Embed(title="Random Number Generator", color=color)
             embed.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar)
             embed.add_field(name="Range", value=f"1 - {num}", inline=False)
-            embed.add_field(name="Number", value=random.choice(range(num)))
+            embed.add_field(name="Number", value=random.choice(range(num)) + 1)
 
             await ctx.reply(embed=embed)
 
